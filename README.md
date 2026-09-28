@@ -1,5 +1,7 @@
 # rpgmv-event-tools
 
+[![CI](https://github.com/pelosis-big-knockers/rpgmv-event-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/pelosis-big-knockers/rpgmv-event-tools/actions/workflows/ci.yml)
+
 Tools for reading, understanding and modifying RPG Maker MV event logic
 (`CommonEvents.json`, `MapXXX.json`, `Troops.json`) as readable script instead of raw JSON.
 
