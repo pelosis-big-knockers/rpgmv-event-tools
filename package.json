@@ -12,24 +12,20 @@
 		"watch": "tsc -b && concurrently -n tsc,esbuild \"tsc -b -w --preserveWatchOutput\" \"npm run watch -w packages/vscode\"",
 		"clean": "tsc -b --clean && npm run clean -w packages/vscode",
 		"typecheck": "tsc -b && tsc -p packages/core/tsconfig.test.json && tsc -p packages/vscode",
-		"lint": "eslint .",
+		"lint": "oxlint --deny-warnings",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
 	"devDependencies": {
-		"@eslint/js": "^10.0.1",
 		"@types/node": "^22.20.4",
 		"@types/vscode": "~1.100.0",
 		"concurrently": "^10.0.5",
 		"esbuild": "^0.28.2",
-		"eslint": "^10.11.0",
-		"eslint-config-prettier": "^10.1.8",
-		"globals": "^17.12.0",
+		"oxlint": "^1.86.0",
 		"prettier": "^3.9.9",
-		"typescript": "~6.0.3",
-		"typescript-eslint": "^8.70.1",
+		"typescript": "~7.0.2",
 		"vitest": "^5.0.2"
 	}
 }
