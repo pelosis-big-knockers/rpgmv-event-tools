@@ -55,3 +55,17 @@ jobs:
       - name: Test
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm test
+
+      - name: Package extension
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run package
+
+      # The .vsix from each run can be downloaded from the run's summary page to try a PR build.
+      - name: Upload .vsix
+        if: ${{ matrix.os == 'ubuntu-latest' && steps.install.outcome == 'success' && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: rpgmv-event-tools-vsix
+          path: packages/vscode/*.vsix
+          if-no-files-found: error
+          retention-days: 14

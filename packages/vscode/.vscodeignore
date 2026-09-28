@@ -1,0 +1,7 @@
+# Package only the bundled extension and its assets. package.json is always included.
+**
+!dist/extension.js
+!images/icon.png
+!README.md
+!CHANGELOG.md
+!LICENSE
