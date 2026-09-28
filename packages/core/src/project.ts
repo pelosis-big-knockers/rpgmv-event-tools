@@ -1,4 +1,4 @@
-import { stat } from "node:fs/promises";
+import { readdir, stat } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 
 /**
@@ -40,6 +40,52 @@ export async function resolveMvProject(path: string): Promise<MvProjectLocation 
 		}
 	}
 	return undefined;
+}
+
+export interface FindProjectsOptions {
+	/** How many folder levels below `folder` to search. Defaults to 4. */
+	maxDepth?: number;
+}
+
+/** Folders that never contain a game worth finding, and can be very large. */
+const SKIPPED_FOLDERS = new Set(["node_modules", ".git"]);
+
+/**
+ * Finds the MV projects in `folder` or below it, for example every game in a workspace.
+ * Searching stops at each project found, so folders inside a game are not searched.
+ * Results are sorted by `dataDir`.
+ */
+export async function findProjects(
+	folder: string,
+	options: FindProjectsOptions = {},
+): Promise<MvProjectLocation[]> {
+	const maxDepth = options.maxDepth ?? 4;
+	const found = new Map<string, MvProjectLocation>();
+
+	async function visit(dir: string, depth: number): Promise<void> {
+		const project = await resolveMvProject(dir);
+		if (project) {
+			found.set(project.dataDir, project);
+			return;
+		}
+		if (depth >= maxDepth) {
+			return;
+		}
+		let entries;
+		try {
+			entries = await readdir(dir, { withFileTypes: true });
+		} catch {
+			return; // Unreadable folders are skipped, not fatal.
+		}
+		await Promise.all(
+			entries
+				.filter((entry) => entry.isDirectory() && !SKIPPED_FOLDERS.has(entry.name))
+				.map((entry) => visit(join(dir, entry.name), depth + 1)),
+		);
+	}
+
+	await visit(resolve(folder), 0);
+	return [...found.values()].sort((a, b) => a.dataDir.localeCompare(b.dataDir));
 }
 
 async function detectLayout(gameDir: string): Promise<MvLayout> {

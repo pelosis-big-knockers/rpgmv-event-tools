@@ -4,4 +4,11 @@
  */
 export const CORE_VERSION = "0.0.0";
 
-export { resolveMvProject, type MvLayout, type MvProjectLocation } from "./project.js";
+export {
+	findProjects,
+	resolveMvProject,
+	type FindProjectsOptions,
+	type MvLayout,
+	type MvProjectLocation,
+} from "./project.js";
+export { readProjectSummary, type MvProjectSummary } from "./summary.js";

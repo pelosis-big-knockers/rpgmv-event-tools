@@ -14,7 +14,9 @@
 		"vscode": "^1.100.0"
 	},
 	"main": "./dist/extension.js",
-	"activationEvents": [],
+	"activationEvents": [
+		"workspaceContains:**/data/System.json"
+	],
 	"contributes": {},
 	"scripts": {
 		"build": "node esbuild.mjs",
