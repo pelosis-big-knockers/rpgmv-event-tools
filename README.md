@@ -97,8 +97,8 @@ source maps. Install it with **Extensions: Install from VSIX...** in VS Code, or
 code --install-extension packages/vscode/rpgmv-event-tools-0.0.1.vsix
 ```
 
-The `publisher` in `packages/vscode/package.json` is a placeholder. Publishing to the
-Marketplace needs a registered publisher with that ID.
+The extension is published as `p-b-k` (extension ID `p-b-k.rpgmv-event-tools`), the same
+publisher as `tw-sugarcube-ts-tools`.
 
 ## Game data
 
