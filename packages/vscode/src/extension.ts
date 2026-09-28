@@ -1,4 +1,9 @@
-import { findProjects, readProjectSummary, type MvProjectLocation } from "@rpgmv-event-tools/core";
+import {
+	findProjects,
+	loadProject,
+	summarizeProject,
+	type MvProjectLocation,
+} from "@rpgmv-event-tools/core";
 import * as vscode from "vscode";
 
 let log: vscode.LogOutputChannel;
@@ -37,7 +42,7 @@ async function scanFolders(folders: readonly vscode.WorkspaceFolder[]): Promise<
 async function logProject(project: MvProjectLocation): Promise<void> {
 	log.info(`Found RPG Maker MV project (${project.layout} layout) at ${project.gameDir}`);
 	try {
-		const summary = await readProjectSummary(project);
+		const summary = summarizeProject(await loadProject(project));
 		const counts = [
 			count(summary.commonEvents, "common event"),
 			count(summary.maps, "map"),

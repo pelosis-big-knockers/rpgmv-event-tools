@@ -166,6 +166,25 @@ export class MvDataError extends Error {
 	}
 }
 
+/** `System.json`. Only the fields this library reads are described; the rest pass through. */
+export interface MvSystem extends Extensible {
+	gameTitle: string;
+	/** Switch names by id. Index 0 is unused. */
+	switches: string[];
+	/** Variable names by id. Index 0 is unused. */
+	variables: string[];
+}
+
+/** Checks the parsed content of `System.json`. Returns the same object, typed. */
+export function asSystem(value: unknown, file = "System.json"): MvSystem {
+	const check = new Checker(file);
+	const system = check.asRecord(value, "");
+	check.string(system, "gameTitle");
+	check.array(system, "switches");
+	check.array(system, "variables");
+	return value as MvSystem;
+}
+
 /** Checks the parsed content of `CommonEvents.json`. Returns the same array, typed. */
 export function asCommonEvents(value: unknown, file = "CommonEvents.json"): (CommonEvent | null)[] {
 	return checkEntries(value, new Checker(file), (entry, check) => {
