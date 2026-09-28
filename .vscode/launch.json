@@ -1,0 +1,28 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Run Extension (basic fixture)",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}/packages/vscode",
+				"--disable-extensions",
+				"${workspaceFolder}/packages/core/test/fixtures/basic"
+			],
+			"outFiles": ["${workspaceFolder}/packages/vscode/dist/**/*.js"],
+			"preLaunchTask": "watch"
+		},
+		{
+			"name": "Run Extension (last opened folder)",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}/packages/vscode",
+				"--disable-extensions"
+			],
+			"outFiles": ["${workspaceFolder}/packages/vscode/dist/**/*.js"],
+			"preLaunchTask": "watch"
+		}
+	]
+}

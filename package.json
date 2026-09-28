@@ -9,9 +9,9 @@
 	],
 	"scripts": {
 		"build": "tsc -b && npm run build -w packages/vscode",
-		"watch": "tsc -b && concurrently -n tsc,esbuild \"tsc -b -w --preserveWatchOutput\" \"npm run watch -w packages/vscode\"",
+		"watch": "concurrently -n tsc,esbuild \"tsc -b -w --preserveWatchOutput\" \"npm run watch -w packages/vscode\"",
 		"clean": "tsc -b --clean && npm run clean -w packages/vscode",
-		"typecheck": "tsc -b && tsc -p packages/core/tsconfig.test.json && tsc -p packages/vscode",
+		"typecheck": "tsc -b && tsc -p packages/core/tsconfig.test.json",
 		"lint": "oxlint --deny-warnings",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",

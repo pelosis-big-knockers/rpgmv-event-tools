@@ -1,0 +1,46 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "watch",
+			"dependsOn": ["watch: esbuild", "watch: tsc"],
+			"group": { "kind": "build", "isDefault": true },
+			"problemMatcher": []
+		},
+		{
+			"label": "watch: esbuild",
+			"detail": "Bundle the extension on every change (core is bundled from source)",
+			"type": "npm",
+			"script": "watch",
+			"path": "packages/vscode",
+			"isBackground": true,
+			"presentation": { "group": "watch", "reveal": "never" },
+			"problemMatcher": {
+				"owner": "esbuild",
+				"source": "esbuild",
+				"fileLocation": ["relative", "${workspaceFolder}/packages/vscode"],
+				"pattern": {
+					"regexp": "^✘ \[ERROR\] (.+?):(\d+):(\d+): (.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"message": 4
+				},
+				"background": {
+					"activeBegin": true,
+					"beginsPattern": "^\[watch\] build started",
+					"endsPattern": "^\[watch\] build finished"
+				}
+			}
+		},
+		{
+			"label": "watch: tsc",
+			"detail": "Typecheck all packages on every change",
+			"type": "shell",
+			"command": "npx tsc -b -w --preserveWatchOutput",
+			"isBackground": true,
+			"presentation": { "group": "watch", "reveal": "never" },
+			"problemMatcher": "$tsc-watch"
+		}
+	]
+}

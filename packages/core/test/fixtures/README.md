@@ -7,4 +7,4 @@ Files keep the MV editor's own layout (one array entry per line, no extra whites
 so they are excluded from Prettier and marked `-text` in `.gitattributes` to preserve
 their exact bytes.
 
-- `basic/data/`: a minimal project with a few switches, variables and common events.
+- `basic/data/`: a minimal project with a few switches, variables and common events, and one map entry in `MapInfos.json`.
