@@ -1,0 +1,27 @@
+{
+	"name": "rpgmv-event-tools",
+	"displayName": "RPG Maker MV Event Tools",
+	"description": "Read, navigate and edit RPG Maker MV event logic as readable script.",
+	"version": "0.0.1",
+	"private": true,
+	"publisher": "pelosis-big-knockers",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/pelosis-big-knockers/rpgmv-event-tools.git"
+	},
+	"engines": {
+		"vscode": "^1.100.0"
+	},
+	"main": "./dist/extension.js",
+	"activationEvents": [],
+	"contributes": {},
+	"scripts": {
+		"build": "node esbuild.mjs",
+		"watch": "node esbuild.mjs --watch",
+		"clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
+	},
+	"dependencies": {
+		"@rpgmv-event-tools/core": "*"
+	}
+}

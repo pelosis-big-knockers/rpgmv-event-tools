@@ -1,0 +1,28 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "import", "unicorn", "oxc"],
+	"env": {
+		"builtin": true,
+		"node": true
+	},
+	"categories": {
+		"correctness": "error"
+	},
+	"rules": {
+		"no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
+	},
+	"overrides": [
+		{
+			"files": ["packages/core/**"],
+			"rules": {
+				"no-restricted-imports": [
+					"error",
+					{
+						"paths": [{ "name": "vscode", "message": "core must not depend on VS Code." }]
+					}
+				]
+			}
+		}
+	],
+	"ignorePatterns": ["**/dist/**", "coverage/**"]
+}

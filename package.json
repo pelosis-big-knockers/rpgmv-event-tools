@@ -1,0 +1,31 @@
+{
+	"name": "rpgmv-event-tools-monorepo",
+	"private": true,
+	"type": "module",
+	"license": "MIT",
+	"workspaces": [
+		"packages/core",
+		"packages/vscode"
+	],
+	"scripts": {
+		"build": "tsc -b && npm run build -w packages/vscode",
+		"watch": "tsc -b && concurrently -n tsc,esbuild \"tsc -b -w --preserveWatchOutput\" \"npm run watch -w packages/vscode\"",
+		"clean": "tsc -b --clean && npm run clean -w packages/vscode",
+		"typecheck": "tsc -b && tsc -p packages/core/tsconfig.test.json && tsc -p packages/vscode",
+		"lint": "oxlint --deny-warnings",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"devDependencies": {
+		"@types/node": "^22.20.4",
+		"@types/vscode": "~1.100.0",
+		"concurrently": "^10.0.5",
+		"esbuild": "^0.28.2",
+		"oxlint": "^1.86.0",
+		"prettier": "^3.9.9",
+		"typescript": "~7.0.2",
+		"vitest": "^5.0.2"
+	}
+}
