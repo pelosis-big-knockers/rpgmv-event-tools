@@ -12,3 +12,7 @@ export {
 	type MvProjectLocation,
 } from "./project.js";
 export { readProjectSummary, type MvProjectSummary } from "./summary.js";
+
+// Deliberate CI failure check (to be reverted).
+const unusedForCiCheck = 1;
+export const   badlyFormatted={a:1}
