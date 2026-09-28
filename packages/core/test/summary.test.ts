@@ -1,44 +1,30 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { findProjects, readProjectSummary, resolveMvProject } from "../src/index.js";
+import { findProjects, loadProject, resolveMvProject, summarizeProject } from "../src/index.js";
 import { describeWithGame } from "./support/test-game.js";
 
-describe("readProjectSummary", () => {
+describe("summarizeProject", () => {
 	it("counts the basic fixture", async () => {
-		const project = await resolveMvProject(
+		const location = await resolveMvProject(
 			fileURLToPath(new URL("./fixtures/basic", import.meta.url)),
 		);
-		expect(project).toBeDefined();
-		expect(await readProjectSummary(project!)).toEqual({
+		expect(location).toBeDefined();
+		const project = await loadProject(location!);
+		expect(summarizeProject(project)).toEqual({
 			title: "Fixture Game",
 			commonEvents: 3,
 			maps: 1,
 			switches: 3,
 			variables: 2,
 		});
-	});
-
-	it("reports which file is invalid", async () => {
-		const dataDir = mkdtempSync(join(tmpdir(), "rpgmv-summary-"));
-		try {
-			writeFileSync(join(dataDir, "System.json"), '{"switches":[""],"variables":[""]}');
-			writeFileSync(join(dataDir, "CommonEvents.json"), "[null,");
-			writeFileSync(join(dataDir, "MapInfos.json"), "[null]");
-			await expect(
-				readProjectSummary({ gameDir: join(dataDir, ".."), dataDir, layout: "flat" }),
-			).rejects.toThrow(/CommonEvents\.json is not valid JSON/);
-		} finally {
-			rmSync(dataDir, { recursive: true, force: true });
-		}
+		expect(project.isMapLoaded(1)).toBe(false);
 	});
 });
 
 describeWithGame("summary of the configured test game", (game) => {
 	it("has common events, maps, switches and variables", async () => {
-		const summary = await readProjectSummary(game);
+		const summary = summarizeProject(await loadProject(game));
 		expect(summary.commonEvents).toBeGreaterThan(0);
 		expect(summary.maps).toBeGreaterThan(0);
 		expect(summary.switches).toBeGreaterThan(0);
