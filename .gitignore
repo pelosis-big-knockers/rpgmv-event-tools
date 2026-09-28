@@ -1,0 +1,18 @@
+# Dependencies & build output
+node_modules/
+out/
+dist/
+*.vsix
+coverage/
+
+# Game data must never be committed. Point tests at a local copy via config instead.
+/test-data/
+**/www/data/
+**/www/img/
+**/www/audio/
+**/www/movies/
+
+# Local settings
+.env
+*.log
+.DS_Store
