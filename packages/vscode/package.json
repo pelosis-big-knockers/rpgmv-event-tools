@@ -4,12 +4,29 @@
 	"description": "Read, navigate and edit RPG Maker MV event logic as readable script.",
 	"version": "0.0.1",
 	"private": true,
-	"publisher": "pelosis-big-knockers",
+	"publisher": "p-b-k",
 	"license": "MIT",
+	"icon": "images/icon.png",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/pelosis-big-knockers/rpgmv-event-tools.git"
+		"url": "https://github.com/pelosis-big-knockers/rpgmv-event-tools.git",
+		"directory": "packages/vscode"
 	},
+	"bugs": {
+		"url": "https://github.com/pelosis-big-knockers/rpgmv-event-tools/issues"
+	},
+	"homepage": "https://github.com/pelosis-big-knockers/rpgmv-event-tools#readme",
+	"categories": [
+		"Other"
+	],
+	"keywords": [
+		"rpg maker",
+		"rpg maker mv",
+		"rpgmv",
+		"rpgmaker",
+		"modding",
+		"events"
+	],
 	"engines": {
 		"vscode": "^1.100.0"
 	},
@@ -21,7 +38,10 @@
 	"scripts": {
 		"build": "node esbuild.mjs",
 		"watch": "node esbuild.mjs --watch",
-		"clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
+		"clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+		"vscode:prepublish": "npm run clean && node esbuild.mjs --production",
+		"prepackage": "node -e \"require('node:fs').copyFileSync('../../LICENSE', 'LICENSE')\"",
+		"package": "vsce package --no-dependencies"
 	},
 	"dependencies": {
 		"@rpgmv-event-tools/core": "*"

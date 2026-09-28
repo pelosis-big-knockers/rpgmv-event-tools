@@ -18,12 +18,14 @@
 		"lint": "oxlint --deny-warnings",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
+		"package": "npm run package -w packages/vscode",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
 	"devDependencies": {
 		"@types/node": "^22.20.4",
 		"@types/vscode": "~1.100.0",
+		"@vscode/vsce": "^4.0.0",
 		"concurrently": "^10.0.5",
 		"esbuild": "^0.28.2",
 		"oxlint": "^1.86.0",
