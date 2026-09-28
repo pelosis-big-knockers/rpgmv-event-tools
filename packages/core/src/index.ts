@@ -5,6 +5,14 @@
 export const CORE_VERSION = "0.0.0";
 
 export {
+	mvJsonLayout,
+	parseMvJson,
+	readMvFile,
+	stringifyMvJson,
+	writeMvFile,
+	type MvJsonLayout,
+} from "./mv-json.js";
+export {
 	findProjects,
 	resolveMvProject,
 	type FindProjectsOptions,
