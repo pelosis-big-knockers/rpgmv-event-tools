@@ -75,4 +75,29 @@ export {
 	type MvLayout,
 	type MvProjectLocation,
 } from "./project.js";
+export {
+	STRING_DELIMITERS,
+	formatStringLiteral,
+	isStringDelimiter,
+	parseStringLiteral,
+	type ParsedStringLiteral,
+	type StringDelimiter,
+} from "./string-literals.js";
 export { summarizeProject, type MvProjectSummary } from "./summary.js";
+export {
+	MvSymbols,
+	SYMBOL_COLLECTIONS,
+	collectionName,
+	createSymbols,
+	formatSymbolReference,
+	isDeclarableName,
+	isIdentifierName,
+	isReservedWord,
+	kindOfCollection,
+	parseSymbolReference,
+	type CollectionName,
+	type ParsedSymbolReference,
+	type SymbolKey,
+	type SymbolReference,
+	type SymbolResolution,
+} from "./symbols.js";

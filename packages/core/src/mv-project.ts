@@ -19,6 +19,7 @@ import {
 import { readMvFile, writeMvFile } from "./mv-json.js";
 import { DATABASE_FILES, createNames, type DatabaseKind, type MvNames } from "./names.js";
 import type { MvProjectLocation } from "./project.js";
+import { createSymbols, type MvSymbols } from "./symbols.js";
 
 /** Files every project must have, with the check each one's content must pass. */
 const REQUIRED_FILES = {
@@ -53,6 +54,7 @@ export class MvProject {
 	/** Maps being loaded, so concurrent requests share one read. */
 	readonly #loadingMaps = new Map<number, Promise<MvMap>>();
 	#names: MvNames | undefined;
+	#symbols: MvSymbols | undefined;
 
 	private constructor(location: MvProjectLocation) {
 		this.location = location;
@@ -101,6 +103,12 @@ export class MvProject {
 			),
 		);
 		return this.#names;
+	}
+
+	/** Converts between ids and script references, using `names`. Rebuilt along with it. */
+	get symbols(): MvSymbols {
+		this.#symbols ??= createSymbols(this.names);
+		return this.#symbols;
 	}
 
 	/** Ids of the maps listed in `MapInfos.json`, in ascending order. */
@@ -167,6 +175,7 @@ export class MvProject {
 			throw new Error(`${fileName} is not a data file this project loads`);
 		}
 		this.#names = undefined;
+		this.#symbols = undefined;
 	}
 
 	/** Writes a loaded file back to disk in the MV editor's layout. */
