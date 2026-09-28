@@ -14,3 +14,8 @@ indent_size = 2
 
 [*.md]
 trim_trailing_whitespace = false
+
+# Fixtures mirror MV's own files, which never end with a newline.
+[packages/core/test/fixtures/**]
+insert_final_newline = false
+trim_trailing_whitespace = false
