@@ -7,6 +7,7 @@ coverage/
 
 # Game data must never be committed. Point tests at a local copy via config instead.
 /test-data/
+/test-data.local.json
 **/www/data/
 **/www/img/
 **/www/audio/

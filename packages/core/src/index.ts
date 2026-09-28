@@ -3,3 +3,5 @@
  * also back a CLI or other tools.
  */
 export const CORE_VERSION = "0.0.0";
+
+export { resolveMvProject, type MvLayout, type MvProjectLocation } from "./project.js";
