@@ -83,6 +83,19 @@ export {
 	type ParsedStringLiteral,
 	type StringDelimiter,
 } from "./string-literals.js";
+export {
+	buildStructure,
+	checkStructure,
+	walkStructure,
+	type BlockBranch,
+	type BlockNode,
+	type CommandNode,
+	type EndNode,
+	type IndexRange,
+	type RawNode,
+	type RawReason,
+	type StructureNode,
+} from "./structure.js";
 export { summarizeProject, type MvProjectSummary } from "./summary.js";
 export {
 	MvSymbols,
