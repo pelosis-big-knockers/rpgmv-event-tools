@@ -16,3 +16,6 @@ coverage/
 .env
 *.log
 .DS_Store
+
+# TypeScript incremental build info
+*.tsbuildinfo

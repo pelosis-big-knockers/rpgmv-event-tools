@@ -1,0 +1,17 @@
+{
+	"name": "@rpgmv-event-tools/core",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Load, decompile, compile and index RPG Maker MV event data.",
+	"license": "MIT",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	]
+}

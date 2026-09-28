@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+package-lock.json
+LICENSE
+
+# Fixtures mirror the RPG Maker MV editor's own JSON layout (one entry per line) and must not be reformatted.
+**/test/fixtures/

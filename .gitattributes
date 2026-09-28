@@ -1,0 +1,4 @@
+* text=auto eol=lf
+
+# MV fixtures must keep their exact bytes for round-trip tests.
+**/test/fixtures/** -text
