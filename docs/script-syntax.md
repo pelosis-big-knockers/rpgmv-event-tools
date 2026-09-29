@@ -653,12 +653,19 @@ prints as:
 command(232, [1, 0, 0, 0, 408, 312, 100, 100, 255, 0, 60, true]);
 ```
 
-- The second argument is the command's `parameters` as **JSON** (the only place with JSON's
-  escape rules). The parser reads it as JSON.
+- The second argument is the command's `parameters` as a **JavaScript literal**, in the form
+  Prettier leaves alone: keys unquoted when they are identifiers, and strings in double quotes
+  unless the text has more `"` than `'`. It is the only place where strings use JavaScript's
+  escape rules (`"\\c[2]"`), and the parser reads it that way. Any JSON is also such a literal.
 - `indent` is derived from the nesting, like for every other command. When the stored indent
   differs (malformed data), it prints as an option: `command(412, [], { indent: 3 });`.
+- A command object with keys other than `code`, `indent` and `parameters`, or with them in
+  another order, prints whole, so it is kept exactly:
+  `command({ code: 108, indent: 0, parameters: ["…"], extra: 1 });`.
 - Structural codes that don't fit the expected structure (an orphaned `411`, a missing `412`)
   also print raw, each on its own line, so any list decompiles.
+- A list that doesn't end with the usual final `0` has `end: false` in its container's or page's
+  options, so the compiler doesn't add one.
 
 ## 8. Commands by group
 
@@ -927,20 +934,20 @@ as `.goods(…)`. #44 also records any catalog code that deliberately keeps the 
 
 The compiler regenerates all of this:
 
-| Data                                           | Why it can be left out                                                       |
-| ---------------------------------------------- | ---------------------------------------------------------------------------- |
-| `indent` of every command                      | It is the nesting depth (the raw fallback prints it when it differs)         |
-| `0` terminators                                | One ends every branch body and every list                                    |
-| Block ends `412`, `404`, `413`, `604`          | They are the end of the `if`, choice array, loop body or battle handlers     |
-| Branch starts `411`, `402`, `403`, `601`–`603` | They are `else`, `choice(…)`, `onCancel`, `onWin`, `onEscape`, `onLose`      |
-| The choice index and text in `402`             | The index is the choice's position; the text is a copy from `102`            |
-| The parameters of `403`                        | The editor writes `[6, null]`, and the engine doesn't read them              |
-| `505` Movement Route Step lines                | Copies of the route's steps                                                  |
-| A move route's final `{ "code": 0 }`           | It ends every route                                                          |
-| Parameter counts of `111` and `122`            | Fixed by condition and operand type ([8.1](#81-flow-control-and-game-state)) |
-| Can Escape and Can Lose of `301`               | Present exactly when the `onEscape` and `onLose` handlers are                |
-| Designation parameters                         | Whether a constant or a variable is used ([5.6](#56-values-from-variables))  |
-| Options at their default value                 | The compiler writes the default                                              |
+| Data                                           | Why it can be left out                                                                  |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `indent` of every command                      | It is the nesting depth (the raw fallback prints it when it differs)                    |
+| `0` terminators                                | One ends every branch body and every list (see `end: false` in [7.7](#77-raw-fallback)) |
+| Block ends `412`, `404`, `413`, `604`          | They are the end of the `if`, choice array, loop body or battle handlers                |
+| Branch starts `411`, `402`, `403`, `601`–`603` | They are `else`, `choice(…)`, `onCancel`, `onWin`, `onEscape`, `onLose`                 |
+| The choice index and text in `402`             | The index is the choice's position; the text is a copy from `102`                       |
+| The parameters of `403`                        | The editor writes `[6, null]`, and the engine doesn't read them                         |
+| `505` Movement Route Step lines                | Copies of the route's steps                                                             |
+| A move route's final `{ "code": 0 }`           | It ends every route                                                                     |
+| Parameter counts of `111` and `122`            | Fixed by condition and operand type ([8.1](#81-flow-control-and-game-state))            |
+| Can Escape and Can Lose of `301`               | Present exactly when the `onEscape` and `onLose` handlers are                           |
+| Designation parameters                         | Whether a constant or a variable is used ([5.6](#56-values-from-variables))             |
+| Options at their default value                 | The compiler writes the default                                                         |
 
 Kept from the file instead (principle 4): page graphics and movement settings, troop members,
 unused page-condition slots, and a common event's switch while its trigger is `"none"`.
