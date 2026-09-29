@@ -145,6 +145,31 @@ export function willBreak(doc: Doc): boolean {
 	}
 }
 
+/** Whether `doc` has any line that could break (Prettier's `canBreak`). */
+export function canBreak(doc: Doc): boolean {
+	if (typeof doc === "string") {
+		return false;
+	}
+	if (isDocArray(doc)) {
+		return doc.some(canBreak);
+	}
+	switch (doc.type) {
+		case "group":
+			return canBreak(doc.contents) || (doc.expandedStates?.some(canBreak) ?? false);
+		case "indent":
+			return canBreak(doc.contents);
+		case "ifBreak":
+			return canBreak(doc.breakContents) || canBreak(doc.flatContents);
+		case "fill":
+			return doc.parts.some(canBreak);
+		case "line":
+			return true;
+		case "breakParent":
+		case "mark":
+			return false;
+	}
+}
+
 export interface PrintOptions {
 	printWidth: number;
 	/** How many columns an indent level counts for when measuring (Prettier's `tabWidth`). */

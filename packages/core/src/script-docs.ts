@@ -17,12 +17,13 @@ import {
 	line,
 	softline,
 	breakParent,
+	canBreak,
 	stringWidth,
 	willBreak,
 	type Doc,
 } from "./layout.js";
 import { formatStringLiteral } from "./string-literals.js";
-import { isIdentifierName } from "./symbols.js";
+import { collectionName, isIdentifierName, type SymbolReference } from "./symbols.js";
 
 /** The ESTree node type Prettier would see. */
 export type ExprType =
@@ -135,7 +136,7 @@ export function jsonLiteral(value: unknown): Expr {
 	}
 }
 
-/** `object.property`, or `object[key]` for a computed key. */
+/** `object.property`. */
 export function member(object: Expr, property: string): Expr {
 	return {
 		doc: [object.doc, ".", property],
@@ -144,9 +145,111 @@ export function member(object: Expr, property: string): Expr {
 	};
 }
 
-/** A reference the symbol table already formatted, such as `switches["Light on"]`. */
+/**
+ * `object[key]`. As in Prettier, a key other than a number can break onto its own line when the
+ * line is too long.
+ */
+export function computedMember(object: Expr, key: Expr): Expr {
+	return {
+		doc:
+			key.type === "NumericLiteral"
+				? [object.doc, "[", key.doc, "]"]
+				: [object.doc, group(["[", indent([softline, key.doc]), softline, "]"])],
+		type: "MemberExpression",
+		memberChain: object.type === "Identifier" || object.memberChain === true,
+	};
+}
+
+/** A fixed member chain such as `troop.turnEnding`. */
 export function reference(text: string): Expr {
-	return { doc: text, type: "MemberExpression", memberChain: true };
+	const [first, ...rest] = text.split(".");
+	return rest.reduce((object, name) => member(object, name), identifier(first ?? ""));
+}
+
+/** A symbol reference in the form the symbol table chose, such as `switches["Light on"]`. */
+export function symbolReference(ref: SymbolReference): Expr {
+	const collection = identifier(collectionName(ref.kind));
+	switch (ref.form) {
+		case "property":
+			return member(collection, ref.name);
+		case "string":
+			return computedMember(collection, scriptString(ref.name));
+		case "id":
+			return computedMember(collection, numberLiteral(ref.id));
+	}
+}
+
+/** A prefix operator: `!value`, `-value`. */
+export function unary(operator: string, argument: Expr): Expr {
+	return { doc: [operator, argument.doc], type: "UnaryExpression" };
+}
+
+/**
+ * An assignment statement's expression, `left = right` or `left += right`, in Prettier's layouts:
+ * a string or member chain moves to the next line when it doesn't fit, and anything else stays
+ * after the operator and breaks inside itself.
+ */
+export function assignment(left: Expr, operator: string, right: Expr): Doc {
+	if (neverBreaksAfterOperator(left.doc, right)) {
+		return group([group(left.doc), " ", operator, " ", right.doc]);
+	}
+	if (right.type === "StringLiteral" || right.memberChain) {
+		return group([group(left.doc), " ", operator, group(indent([line, right.doc]))]);
+	}
+	const id = Symbol("assignment");
+	return group([
+		group(left.doc),
+		" ",
+		operator,
+		group(indent(line), { id }),
+		indentIfBreak(right.doc, id),
+	]);
+}
+
+/** A call on a member, such as `party.has(items.Potion)`. */
+export function methodCall(object: Expr, name: string, args: readonly Expr[]): Expr {
+	return { doc: group([object.doc, ".", name, callArguments(args)]), type: "CallExpression" };
+}
+
+/**
+ * Two or more calls chained on an object, such as `switches.range(1, 3).set(false)`: on one line
+ * when it fits, otherwise one call per line, as Prettier prints member chains.
+ */
+export function callChain(
+	object: Expr,
+	calls: readonly (readonly [name: string, args: readonly Expr[]])[],
+): Expr {
+	const printed = calls.map(([name, args]) => [".", name, callArguments(args)]);
+	return {
+		doc: conditionalGroup([
+			[object.doc, ...printed],
+			[object.doc, indent(group([hardline, join(hardline, printed)]))],
+		]),
+		type: "CallExpression",
+	};
+}
+
+/**
+ * A block statement's braces around `statements`. Unlike an arrow function's body, an empty
+ * block still breaks: `{` and `}` on their own lines. `beforeClose` is printed just before the
+ * closing brace (for source-map marks).
+ */
+export function block(statements: readonly Doc[], beforeClose: Doc = ""): Doc {
+	return statements.length === 0
+		? ["{", hardline, beforeClose, "}"]
+		: ["{", indent([hardline, join(hardline, statements)]), hardline, beforeClose, "}"];
+}
+
+/** `if (test) { … }`, with an optional `else` block or `else if`. */
+export function ifStatement(test: Expr, consequent: Doc, alternate?: Doc): Doc {
+	const opening = group([
+		"if (",
+		group([indent([softline, test.doc]), softline]),
+		")",
+		" ",
+		consequent,
+	]);
+	return alternate === undefined ? opening : group([opening, " ", "else", group([" ", alternate])]);
 }
 
 /** An object literal. Keys are quoted only when they aren't identifiers, as Prettier does. */
@@ -170,11 +273,21 @@ function property(key: string, value: Expr): Doc {
 	if (binaryish || (!shortKey && (value.type === "StringLiteral" || value.memberChain))) {
 		return group([keyDoc, ":", group(indent([line, value.doc]))]);
 	}
-	if (shortKey || value.type === "TemplateLiteral") {
+	if (shortKey || value.type === "TemplateLiteral" || neverBreaksAfterOperator(keyDoc, value)) {
 		return group([keyDoc, ": ", value.doc]);
 	}
 	const id = Symbol("assignment");
 	return group([keyDoc, ":", group(indent(line), { id }), indentIfBreak(value.doc, id)]);
+}
+
+/**
+ * Prettier never moves a number or boolean literal to the line after `=` or `:` when the left
+ * side can't break either, even if the line is too long. (A negative number is a unary
+ * expression, and does move; so does a literal after a left side that can break, such as
+ * `switches["Long name"]`.)
+ */
+function neverBreaksAfterOperator(left: Doc, value: Expr): boolean {
+	return (value.type === "NumericLiteral" || value.type === "BooleanLiteral") && !canBreak(left);
 }
 
 /** An array literal. Arrays of numbers fill lines; others put each element on its own line. */

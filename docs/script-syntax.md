@@ -674,7 +674,7 @@ and `character` for a [character reference](#55-characters).
 
 ### 8.1 Flow control and game state
 
-**Outline** (#41 finalizes).
+Finalized in #41.
 
 | Code(s)         | Command             | Script                                                                                                              |
 | --------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -697,7 +697,7 @@ and `character` for a [character reference](#55-characters).
 | timer       | `timer.seconds >= 60`, `timer.seconds <= 60`                                                                                                                                                                 |
 | actor       | `party.has(actors.X)`, `actors.X.name === "…"`, `actors.X.class === classes.Y`, `actors.X.hasSkill(skills.Y)`, `actors.X.hasWeapon(weapons.Y)`, `actors.X.hasArmor(armors.Y)`, `actors.X.hasState(states.Y)` |
 | enemy       | `troop.members[0].appeared`, `troop.members[0].hasState(states.Y)`                                                                                                                                           |
-| character   | `player.direction === "up"`, `map.events.Guard.direction === "left"`                                                                                                                                         |
+| character   | `player.direction === "up"`, `map.events[4].direction === "left"` (directions `"down"`, `"left"`, `"right"`, `"up"`)                                                                                         |
 | gold        | `party.gold >= 100`, `party.gold <= 100`, `party.gold < 100`                                                                                                                                                 |
 | item        | `party.has(items.X)`                                                                                                                                                                                         |
 | weapon      | `party.has(weapons.X)`, `party.has(weapons.X, { includeEquipment: true })`                                                                                                                                   |
@@ -712,9 +712,9 @@ and `character` for a [character reference](#55-characters).
 | Game data           | Script                                                                                                                                                               |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | item, weapon, armor | `party.count(items.X)` (how many the party has)                                                                                                                      |
-| actor               | `actors.X.level`, `.exp`, `.hp`, `.mp`, `.maxHp`, `.maxMp`, `.attack`, … (the catalog's parameter names)                                                             |
-| enemy               | `troop.members[0].hp`, `.mp`, `.maxHp`, …                                                                                                                            |
-| character           | `player.x`, `event.y`, `map.events.Guard.direction`, `.screenX`, `.screenY`                                                                                          |
+| actor               | `actors.X.level`, `.exp`, `.hp`, `.mp`, `.maxHp`, `.maxMp`, `.attack`, `.defense`, `.magicAttack`, `.magicDefense`, `.agility`, `.luck`                              |
+| enemy               | `troop.members[0].hp`, `.mp`, `.maxHp`, `.maxMp`, `.attack`, … (as for actors, without level and EXP)                                                                |
+| character           | `player.x`, `event.y`, `map.events[4].direction`, `.screenX`, `.screenY`                                                                                             |
 | party               | `party.members[0]` (the actor id of the first member)                                                                                                                |
 | other               | `game.mapId`, `party.size`, `party.gold`, `party.steps`, `game.playTime`, `timer.seconds`, `game.saveCount`, `game.battleCount`, `game.winCount`, `game.escapeCount` |
 
@@ -734,6 +734,22 @@ type in the test game):
 | `122` operand type | constant | variable | script | random | game data |
 | ------------------ | -------- | -------- | ------ | ------ | --------- |
 | Count              | 5        | 5        | 5      | 6      | 7         |
+
+**Details.**
+
+- **Ranges** (`121`, `122` with a different first and last id) are a chain on the collection:
+  `switches.range(10, 15).set(false)`, and for variables `.set`, `.add`, `.sub`, `.mul`, `.div`
+  or `.mod` for the operators `=`, `+=`, `-=`, `*=`, `/=`, `%=`. A single id is an assignment.
+  The test game has no ranges.
+- **Unused game data values.** Game data stores a second value even where it isn't used (item,
+  weapon and armor counts, party members, other values). The editor writes `0` there (every case
+  in the test game), and the syntax prints only that; any other value uses the raw fallback.
+- **`timer.stop()`** stands for `[1, 0]`. Other stored values of a stop use the raw fallback.
+- **Characters** are `player`, `event` or `map.events[id]` here. Event names follow with the
+  per-map names of [5.5](#55-characters) in #43.
+- **Exact shapes only.** A command prints with this syntax only when its parameter count and
+  types are exactly the ones above (`includeEquipment` a boolean, texts without line breaks, and
+  so on). Anything else uses the raw fallback.
 
 ### 8.2 Messages, comments, scripts and plugin commands
 
