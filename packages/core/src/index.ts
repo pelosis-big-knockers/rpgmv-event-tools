@@ -21,6 +21,17 @@ export {
 	type ParameterType,
 } from "./commands.js";
 export {
+	REFERENCE_LINE,
+	decompile,
+	decompileDocument,
+	sumCoverage,
+	type DecompileContext,
+	type DecompiledScript,
+	type FallbackCoverage,
+	type ScriptContainer,
+} from "./decompile.js";
+export type { Doc } from "./layout.js";
+export {
 	MvDataError,
 	asCommonEvents,
 	asMap,
@@ -75,6 +86,14 @@ export {
 	type MvLayout,
 	type MvProjectLocation,
 } from "./project.js";
+export { RENDERERS, type CommandRenderer, type RenderContext } from "./renderers.js";
+export {
+	ScriptSourceMap,
+	type ContainerRef,
+	type LineRange,
+	type ScriptSegment,
+	type SegmentTarget,
+} from "./source-map.js";
 export {
 	STRING_DELIMITERS,
 	formatStringLiteral,
