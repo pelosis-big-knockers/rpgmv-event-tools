@@ -209,7 +209,7 @@ describe("decompileDocument on the fixture", () => {
 				'defineTroop({ id: 1, name: "Cellar Bats" }, [',
 				'\tpage({ span: "battle", when: () => troop.turn(1) }, () => {',
 				'\t\tshowText("More bats pour out of the dark!");',
-				"\t\tcommand(335, [1]);",
+				"\t\tenemyAppear(troop.members[1]);",
 				"\t}),",
 				'\tpage({ span: "battle" }, () => {}),',
 				"]);",
