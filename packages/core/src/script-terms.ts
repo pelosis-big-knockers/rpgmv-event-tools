@@ -2,7 +2,15 @@
  * Script expressions for MV concepts that more than one command uses: the running event, other
  * characters and troop members (see `docs/script-syntax.md`, sections 5.4 and 5.5).
  */
-import { computedMember, identifier, member, numberLiteral, type Expr } from "./script-docs.js";
+import {
+	computedMember,
+	identifier,
+	member,
+	numberLiteral,
+	scriptString,
+	type Expr,
+} from "./script-docs.js";
+import { isIdentifierName, type SymbolKey } from "./symbols.js";
 
 /** The body's parameter for the running event. */
 export const EVENT = identifier("event");
@@ -13,10 +21,48 @@ export function troopMember(index: number): Expr {
 }
 
 /**
- * A character by MV's number: `player` (-1), the running `event` (0), or `map.events[id]`.
- * `useEvent` is called when the running event is used. Returns `undefined` for other numbers.
+ * The names of one map's events, for referring to them as `map.events.Name`. Names follow the
+ * symbol table's rules (spec 5.2) among the events of that map: an identifier used by no other
+ * event prints as a property, another unique non-empty name in brackets, and anything else as
+ * the id.
  */
-export function character(id: unknown, useEvent: () => void): Expr | undefined {
+export class MapEventNames {
+	readonly #names: readonly (string | undefined)[];
+	readonly #counts = new Map<string, number>();
+
+	/** The map's events by id, as in a map file: index 0 and deleted events are `null`. */
+	constructor(events: readonly ({ readonly name?: unknown } | null | undefined)[]) {
+		this.#names = events.map((event) =>
+			typeof event?.name === "string" && event.name !== "" ? event.name : undefined,
+		);
+		for (const name of this.#names) {
+			if (name !== undefined) {
+				this.#counts.set(name, (this.#counts.get(name) ?? 0) + 1);
+			}
+		}
+	}
+
+	/** How to refer to event `id` of the map. */
+	key(id: number): SymbolKey {
+		const name = id > 0 ? this.#names[id] : undefined;
+		if (name === undefined || this.#counts.get(name) !== 1) {
+			return { form: "id", id };
+		}
+		return { form: isIdentifierName(name) ? "property" : "string", name };
+	}
+}
+
+/**
+ * A character by MV's number: `player` (-1), the running `event` (0), or another event of the
+ * current map, by name when `names` has one (`map.events.Gate`) and otherwise by id
+ * (`map.events[12]`). `useEvent` is called when the running event is used. Returns `undefined`
+ * for other numbers.
+ */
+export function character(
+	id: unknown,
+	useEvent: () => void,
+	names?: MapEventNames,
+): Expr | undefined {
 	if (id === -1) {
 		return identifier("player");
 	}
@@ -24,9 +70,19 @@ export function character(id: unknown, useEvent: () => void): Expr | undefined {
 		useEvent();
 		return EVENT;
 	}
-	return Number.isInteger(id) && (id as number) > 0
-		? computedMember(member(identifier("map"), "events"), numberLiteral(id as number))
-		: undefined;
+	if (!Number.isInteger(id) || (id as number) <= 0) {
+		return undefined;
+	}
+	const events = member(identifier("map"), "events");
+	const key: SymbolKey = names?.key(id as number) ?? { form: "id", id: id as number };
+	switch (key.form) {
+		case "property":
+			return member(events, key.name);
+		case "string":
+			return computedMember(events, scriptString(key.name));
+		case "id":
+			return computedMember(events, numberLiteral(key.id));
+	}
 }
 
 /** A value's name in a table indexed by value, or `undefined` if it has none. */

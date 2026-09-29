@@ -55,6 +55,11 @@ export interface Expr {
 	readonly blockBody?: boolean;
 	/** A member expression on an identifier chain, such as `switches.Door` or `a.b[1]`. */
 	readonly memberChain?: boolean;
+	/**
+	 * Not a "simple" call argument to Prettier: here, anything holding a string split with `+`.
+	 * Prettier always breaks a member chain of three or more calls with such an argument.
+	 */
+	readonly complex?: boolean;
 }
 
 export function identifier(name: string): Expr {
@@ -82,7 +87,7 @@ export const nullLiteral: Expr = { doc: "null", type: "NullLiteral" };
 export function scriptString(text: string): Expr {
 	const literal = formatStringLiteral(text);
 	if (literal.length !== text.length + 2) {
-		return { doc: literal, type: "BinaryExpression" };
+		return { doc: literal, type: "BinaryExpression", complex: true };
 	}
 	return { doc: literal, type: literal.startsWith("`") ? "TemplateLiteral" : "StringLiteral" };
 }
@@ -142,6 +147,7 @@ export function member(object: Expr, property: string): Expr {
 		doc: [object.doc, ".", property],
 		type: "MemberExpression",
 		memberChain: object.type === "Identifier" || object.memberChain === true,
+		...complexIf(object.complex),
 	};
 }
 
@@ -157,7 +163,13 @@ export function computedMember(object: Expr, key: Expr): Expr {
 				: [object.doc, group(["[", indent([softline, key.doc]), softline, "]"])],
 		type: "MemberExpression",
 		memberChain: object.type === "Identifier" || object.memberChain === true,
+		...complexIf(object.complex || key.complex),
 	};
+}
+
+/** `{ complex: true }` when `complex`, so the flag is only present when set. */
+function complexIf(complex: boolean | undefined): { complex?: true } {
+	return complex ? { complex } : {};
 }
 
 /** A fixed member chain such as `troop.turnEnding`. */
@@ -230,6 +242,37 @@ export function callChain(
 }
 
 /**
+ * Calls chained on a call, as in a builder: `setMovementRoute(player).moveUp().wait(15)`. Laid
+ * out as Prettier's member chains (`printMemberChain`) are when the head is a plain call: the
+ * head call is the first group, and each chained call is a group of its own. With one chained
+ * call the chain stays together and only arguments break. With two or more it is on one line
+ * when it fits, and otherwise one call per line; a chain with a complex argument always breaks.
+ */
+export function builderChain(
+	head: Expr,
+	calls: readonly (readonly [name: string, args: readonly Expr[]])[],
+): Expr {
+	if (calls.length === 0) {
+		return head;
+	}
+	const printed: Doc[] = calls.map(([name, args]) => [".", name, callArguments(args)]);
+	const oneLine: Doc[] = [head.doc, ...printed];
+	if (calls.length === 1) {
+		return { doc: group(oneLine), type: "CallExpression" };
+	}
+	const expanded: Doc = [head.doc, indent(group([hardline, join(hardline, printed)]))];
+	const complex =
+		head.complex === true || calls.some(([, args]) => args.some((arg) => arg.complex));
+	if (complex || [head.doc, ...printed.slice(0, -1)].some(willBreak)) {
+		return { doc: group(expanded), type: "CallExpression" };
+	}
+	return {
+		doc: [willBreak(oneLine) ? breakParent : "", conditionalGroup([oneLine, expanded])],
+		type: "CallExpression",
+	};
+}
+
+/**
  * A block statement's braces around `statements`. Unlike an arrow function's body, an empty
  * block still breaks: `{` and `}` on their own lines. `beforeClose` is printed just before the
  * closing brace (for source-map marks).
@@ -262,6 +305,7 @@ export function objectLiteral(properties: readonly (readonly [key: string, value
 		doc: group(["{", indent([line, join([",", line], printed)]), ifBreak(","), line, "}"]),
 		type: "ObjectExpression",
 		size: properties.length,
+		...complexIf(properties.some(([, value]) => value.complex)),
 	};
 }
 
@@ -325,12 +369,17 @@ export function arrayLiteral(elements: readonly Expr[]): Expr {
 		type: "ArrayExpression",
 		size: elements.length,
 		concise,
+		...complexIf(elements.some((element) => element.complex)),
 	};
 }
 
 /** A call, laid out by Prettier's rules for call arguments, including "hugging" the last one. */
 export function call(callee: Doc, args: readonly Expr[]): Expr {
-	return { doc: [callee, callArguments(args)], type: "CallExpression" };
+	return {
+		doc: [callee, callArguments(args)],
+		type: "CallExpression",
+		...complexIf(args.some((arg) => arg.complex)),
+	};
 }
 
 function callArguments(args: readonly Expr[]): Doc {

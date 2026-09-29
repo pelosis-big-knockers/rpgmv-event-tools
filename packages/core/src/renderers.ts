@@ -2,6 +2,8 @@ import type { EventCommand } from "./commands.js";
 import { FLOW_RENDERERS } from "./flow-renderers.js";
 import type { Doc } from "./layout.js";
 import { MESSAGE_RENDERERS } from "./message-renderers.js";
+import { MOVEMENT_RENDERERS } from "./movement-renderers.js";
+import type { Expr } from "./script-docs.js";
 import type { BlockNode, CommandNode, StructureNode } from "./structure.js";
 import type { MvSymbols } from "./symbols.js";
 
@@ -31,6 +33,12 @@ export interface RenderContext {
 	segment(start: number, end: number, doc: Doc): Doc;
 	/** Records that the node uses the running event, so the body declares its parameter. */
 	useEvent(): void;
+	/**
+	 * A character by MV's number (spec 5.5): `player`, `event` (recording its use), or another
+	 * event of the current map, by name in a map event's script and by id elsewhere. `undefined`
+	 * for numbers that aren't characters.
+	 */
+	character(id: unknown): Expr | undefined;
 }
 
 /**
@@ -54,4 +62,5 @@ export type CommandRenderer = (
 export const RENDERERS: ReadonlyMap<number, CommandRenderer> = new Map<number, CommandRenderer>([
 	...FLOW_RENDERERS,
 	...MESSAGE_RENDERERS,
+	...MOVEMENT_RENDERERS,
 ]);

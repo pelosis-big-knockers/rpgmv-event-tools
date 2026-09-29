@@ -38,7 +38,7 @@ import {
 	symbolReference,
 	type Expr,
 } from "./script-docs.js";
-import { EVENT, troopMember } from "./script-terms.js";
+import { EVENT, MapEventNames, character, troopMember } from "./script-terms.js";
 import { ScriptSourceMap, type ContainerRef, type SegmentTarget } from "./source-map.js";
 import {
 	buildStructure,
@@ -58,7 +58,17 @@ export interface DecompileContext {
 /** A common event, map event or troop to print, with its id (its position in its file). */
 export type ScriptContainer =
 	| { kind: "commonEvent"; id: number; commonEvent: CommonEvent }
-	| { kind: "mapEvent"; mapId: number; id: number; event: MapEvent }
+	| {
+			kind: "mapEvent";
+			mapId: number;
+			id: number;
+			event: MapEvent;
+			/**
+			 * The map's events by id (`MvMap.events`), so its scripts can refer to them by name
+			 * (`map.events.Gate`). Without it, they are referred to by id.
+			 */
+			mapEvents?: readonly (MapEvent | null)[];
+	  }
 	| { kind: "troop"; id: number; troop: Troop };
 
 /** How many commands were printed, and how many of them with the raw fallback. */
@@ -146,6 +156,9 @@ class ScriptPrinter {
 	#segments: MutableSegment[] = [];
 	#commands = 0;
 	#rawByCode = new Map<number, number>();
+	/** Names of the events of the map whose event is being printed. */
+	#eventNames: MapEventNames | undefined;
+	readonly #eventNamesByMap = new WeakMap<readonly (MapEvent | null)[], MapEventNames>();
 
 	constructor(context: DecompileContext) {
 		this.#symbols = context.symbols;
@@ -169,8 +182,20 @@ class ScriptPrinter {
 		switch (container.kind) {
 			case "commonEvent":
 				return this.#commonEvent(container.id, container.commonEvent);
-			case "mapEvent":
-				return this.#mapEvent(container.mapId, container.id, container.event);
+			case "mapEvent": {
+				const events = container.mapEvents;
+				let names = events && this.#eventNamesByMap.get(events);
+				if (events && !names) {
+					names = new MapEventNames(events);
+					this.#eventNamesByMap.set(events, names);
+				}
+				this.#eventNames = names;
+				try {
+					return this.#mapEvent(container.mapId, container.id, container.event);
+				} finally {
+					this.#eventNames = undefined;
+				}
+			}
 			case "troop":
 				return this.#troop(container.id, container.troop);
 		}
@@ -448,6 +473,9 @@ class ScriptPrinter {
 			rawByCode: new Map(this.#rawByCode),
 			usesEvent: state.usesEvent,
 		};
+		const useEvent = () => {
+			state.usesEvent = true;
+		};
 		const context: RenderContext = {
 			list,
 			symbols: this.#symbols,
@@ -457,9 +485,8 @@ class ScriptPrinter {
 				this.#statements(location, list, nodes, depth + 1, state, inLoop || options?.loop === true),
 			nested: (nested) => this.#render(location, list, nested, depth + 1, state, inLoop),
 			segment: (start, end, doc) => this.#segment({ kind: "commands", location, start, end }, doc),
-			useEvent: () => {
-				state.usesEvent = true;
-			},
+			useEvent,
+			character: (id) => character(id, useEvent, this.#eventNames),
 		};
 		const doc = renderer(node, context);
 		if (doc === undefined) {

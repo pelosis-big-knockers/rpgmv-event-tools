@@ -450,7 +450,7 @@ describeWithGame("flow renderers on the configured test game", (game) => {
 				scripts.push(
 					decompileDocument(
 						map.events.flatMap((event, id) =>
-							event ? [{ kind: "mapEvent" as const, mapId, id, event }] : [],
+							event ? [{ kind: "mapEvent" as const, mapId, id, event, mapEvents: map.events }] : [],
 						),
 						decompileContext,
 					),
