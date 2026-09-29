@@ -145,6 +145,7 @@ describe("projects on disk", () => {
 	it("reload a file that changed on disk", async () => {
 		const project = await loadProject(location);
 		expect(project.names.commonEvent(1)).toBe("Toggle lantern");
+		expect(project.symbols.format("commonEvent", 1)).toBe('commonEvents["Toggle lantern"]');
 
 		const other = await loadProject(location);
 		other.commonEvents[1]!.name = "Changed elsewhere";
@@ -154,6 +155,7 @@ describe("projects on disk", () => {
 		await project.reload("CommonEvents.json");
 		expect(project.commonEvents[1]?.name).toBe("Changed elsewhere");
 		expect(project.names.commonEvent(1)).toBe("Changed elsewhere");
+		expect(project.symbols.format("commonEvent", 1)).toBe('commonEvents["Changed elsewhere"]');
 	});
 
 	it("reload loaded maps, and leave unloaded maps to load later", async () => {
