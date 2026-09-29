@@ -17,8 +17,7 @@ Example of the planned decompiled output (the syntax is specified in
 [docs/script-syntax.md](docs/script-syntax.md)):
 
 ```ts
-@commonEvent({ id: 1, trigger: "none" })
-function Toggle_lantern() {
+defineCommonEvent({ id: 1, name: "Toggle lantern", trigger: "none" }, () => {
 	if (switches["Lantern lit"]) {
 		switches["Lantern lit"] = false;
 		showText("You put out the lantern.");
@@ -26,7 +25,7 @@ function Toggle_lantern() {
 		switches["Lantern lit"] = true;
 		showText("You light the lantern.");
 	}
-}
+});
 ```
 
 ## Status

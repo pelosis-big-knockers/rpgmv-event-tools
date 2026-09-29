@@ -15,7 +15,7 @@ Contents:
 3. [Principles](#3-principles)
 4. [Lexical rules](#4-lexical-rules)
 5. [Names and references](#5-names-and-references)
-6. [Containers and pages](#6-containers-and-pages)
+6. [Documents, containers and pages](#6-documents-containers-and-pages)
 7. [Statements](#7-statements)
 8. [Commands by group](#8-commands-by-group)
 9. [Data the script leaves out](#9-data-the-script-leaves-out)
@@ -25,11 +25,10 @@ Contents:
 ## 1. Overview
 
 An MV event is a list of numbered commands (`101` Show Text, `111` Conditional Branch, …) with
-an `indent` on each one. The script prints that list as TypeScript-flavored code:
+an `indent` on each one. The script prints that list as TypeScript:
 
 ```ts
-@commonEvent({ id: 3, trigger: "none" })
-function Light_lantern() {
+defineCommonEvent({ id: 3, name: "Light lantern", trigger: "none" }, () => {
 	if (switches.Lantern_lit) {
 		showText("The lantern is already lit.");
 	} else {
@@ -37,13 +36,15 @@ function Light_lantern() {
 		playSe("Fire1");
 		showText("You light the lantern.");
 	}
-}
+});
 ```
 
-It looks like TypeScript, but it is its own language with its own parser (#6). It stays close
-enough to TypeScript that a valid-TS copy can be generated mechanically, for example to run the TS
-language service over it (spike #45). Where the script has constructs that TypeScript doesn't,
-this spec says so.
+Every construct is ordinary TypeScript syntax: calls, arrow functions, object and array literals,
+`if`/`else` and assignments. Nothing is custom except how string literals are read
+([4.4](#44-string-literals)). The script describes MV commands and is never run, but it reads
+the way a TypeScript developer expects: every name is either a declared global
+([5.3](#53-global-state)) or a parameter. A valid-TS copy can be generated mechanically, for
+example to run the TS language service over it (spike #45).
 
 ## 2. MV concepts in brief
 
@@ -55,6 +56,9 @@ Short background for readers new to RPG Maker MV. The terms here are used throug
   choices) are not nested objects. They are flat runs of commands, marked by `indent` and by
   extra commands that open branches (`411` Else) and close blocks (`412` End). Every list, and
   every branch body, ends with a code `0` command.
+- **Indent**: a command's nesting depth. The editor uses it to draw the tree, and the engine uses
+  it to find where a branch or loop ends. It always follows from the block structure, so the
+  script never prints it.
 - **Common event**: a reusable command list in `CommonEvents.json`. Other events call it (`117`),
   or it runs by itself while a switch is ON: **autorun** (the player can't move until it stops)
   or **parallel** (runs alongside play).
@@ -71,10 +75,11 @@ Short background for readers new to RPG Maker MV. The terms here are used throug
 - **Switch**: a global, numbered ON/OFF flag, named in `System.json`. Switch 12 is the same flag
   everywhere in the game.
 - **Variable**: a global, numbered value, usually an integer.
+- **The running event**: commands always run for an event. For a map page, that's the page's
+  event. For a common event, it's the event that called it, if any.
 - **Self switch**: four ON/OFF flags, `A` to `D`, that belong to one map event. Self switch `A`
   of event 7 on map 3 is unrelated to `A` of any other event. They typically record "this chest
-  is open" without spending a global switch. A common event uses the self switches of the event
-  that called it.
+  is open" without spending a global switch. Commands use the self switches of the running event.
 - **Database**: numbered entries in `Actors.json`, `Items.json` and so on. Commands refer to them
   by id. Entry 0 is always unused.
 - **Text code**: a backslash sequence inside message text, such as `\c[2]` (text color 2) or
@@ -89,7 +94,7 @@ Short background for readers new to RPG Maker MV. The terms here are used throug
 1. **Lossless.** Decompiling and then compiling gives back byte-identical JSON. The printer uses a
    construct only when compiling it reproduces the exact command, including parameter types
    (`true` vs `1`) and parameter counts. Otherwise that command prints with the
-   [raw fallback](#74-raw-fallback). So partial or unusual data never loses information.
+   [raw fallback](#77-raw-fallback). So partial or unusual data never loses information.
 2. **Ids are authoritative.** Names are for reading. Every reference also has an id form, and the
    compiler always accepts it.
 3. **Derived data is left out.** Anything the compiler can regenerate from the rest (block ends,
@@ -102,6 +107,9 @@ Short background for readers new to RPG Maker MV. The terms here are used throug
    not printed.
 6. **Text stays exactly as written.** Strings have no escape sequences, so MV text codes and
    backslashes appear in the script exactly as MV stores them.
+7. **Every name has a visible origin.** Globals are the game's global state, the database and the
+   commands, all declared in one place ([5.3](#53-global-state)). Anything that belongs to the
+   running event comes in as a parameter ([5.4](#54-the-running-event-and-self-switches)).
 
 ## 4. Lexical rules
 
@@ -110,43 +118,33 @@ Short background for readers new to RPG Maker MV. The terms here are used throug
 - Source is Unicode text. The printer writes `\n` line ends; the parser also accepts `\r\n`.
 - **Indentation**: the printer indents with **one tab per level**, like this repo's code. Tabs
   keep deep nesting readable (the test game nests up to 134 levels), and each reader can pick a
-  tab width. The parser ignores indentation: blocks are delimited by braces.
+  tab width. The parser ignores indentation.
+- **Line breaks** follow Prettier's TypeScript layout with tabs and a 100-column width, the same
+  settings as this repo, so a script looks the same after a user formats it.
 - Blank lines are not significant, with one exception: a blank line separates two adjacent
-  comments (see [7.3](#73-comments)). The printer puts blank lines only there, between pages and
-  between containers.
-- Statements end with `;`. Blocks (`{ … }`) don't.
+  comments (see [7.6](#76-comments)). The printer puts blank lines only there and between
+  containers.
+- Statements end with `;`.
 
 ### 4.2 Identifiers and reserved words
 
 An **identifier** matches this regular expression, with the `u` flag:
 
 ```
-^[\p{ID_Start}$_][\p{ID_Continue}$\u200C\u200D]*$
+^[\p{ID_Start}$_][\p{ID_Continue}$‌‍]*$
 ```
 
-This is the ECMAScript rule, so identifiers may contain non-ASCII letters
-(`switches.Tür`).
+This is the ECMAScript rule, so identifiers may contain non-ASCII letters (`switches.Tür`).
 
-**Reserved words** can't be used as a function or class name (see [6.1](#61-names-of-functions-and-classes)).
-They are allowed after a dot, as in TypeScript: `switches.if` is fine.
+**Reserved words** are allowed after a dot, as in TypeScript (`switches.if` is fine), but can't
+name a parameter. They are ECMAScript's reserved words, including strict mode's:
 
-- ECMAScript reserved words, including strict mode's:
-
-  ```
-  await break case catch class const continue debugger default delete do else enum export
-  extends false finally for function if implements import in instanceof interface let new null
-  package private protected public return static super switch this throw true try typeof var
-  void while with yield
-  ```
-
-- Other names that would break a generated TS copy: `arguments`, `eval`, `undefined`, `NaN`,
-  `Infinity`.
-- The script's own global names:
-  - every collection in [5.1](#51-collections)
-  - `selfSwitches`, `events`, `player`, `thisEvent`, `party`, `members`, `timer`, `game`, `input`,
-    `plugin`, `command`, `comment`, `script`, `random`
-  - every command call name in [section 8](#8-commands-by-group) (the printer takes them from its
-    renderer registry, #40)
+```
+await break case catch class const continue debugger default delete do else enum export
+extends false finally for function if implements import in instanceof interface let new null
+package private protected public return static super switch this throw true try typeof var
+void while with yield
+```
 
 ### 4.3 Numbers
 
@@ -175,16 +173,21 @@ The printer picks the delimiter from the text:
   commands). A command with such a string uses the raw fallback.
 - `+` is only allowed between string literals, and only joins them.
 - The parser accepts any of the three delimiters for any string that doesn't contain it.
-- #38 implements this rule as `formatStringLiteral` (`packages/core/src/string-literals.ts`).
+- #38 implements this rule as `formatStringLiteral` and `parseStringLiteral`
+  (`packages/core/src/string-literals.ts`).
+
+**This is the one place the script differs from TypeScript.** A TypeScript lexer reads
+backslashes in strings as escapes: it would take `\c` as `c`, see a string ending in `\` as
+unterminated, and reject some sequences such as `\x`. So the script's parser (#6) lexes strings
+itself, and the valid-TS copy (#45) re-escapes them.
 
 **Rationale.** An earlier draft used `"` strings with `\"` as the only escape. That breaks for
 text that ends with a backslash: `"Wait...\"` can't tell a closing quote from an escaped one, so
 `\\` would need to be an escape too, and then MV's own `\\` (a literal backslash) would no longer
-appear as written. Raw strings avoid escaping entirely. The data supports it: in the test game,
-32,391 text lines contain `"`, 8,358 contain both `"` and `'`, none contain a backtick, 227 end
-with a backslash, and none contain a line break. So `'` and `` ` `` cover every line, and the `+`
-split is only a safety net. The cost is that TypeScript tools read `\"` differently: syntax
-highlighting uses our own grammar (#4), and the valid-TS copy (#45) re-escapes strings.
+appear as written. Escaping every quote would also clutter dialogue. Raw strings avoid escaping
+entirely. The data supports it: in the test game, 32,391 text lines contain `"`, 8,358 contain
+both `"` and `'`, none contain a backtick, 227 end with a backslash, and none contain a line
+break. So `'` and `` ` `` cover every line, and the `+` split is only a safety net.
 
 ### 4.5 Text codes
 
@@ -227,7 +230,7 @@ test game, `\c` (47k), `\i` (23k), `\{ \}` and `\> \<` (23k each) are the most u
 ### 4.6 Comments
 
 `//` comments run to the end of the line. They are **MV comments** (command `108`), not
-annotations of the script: see [7.3](#73-comments). There are no block comments.
+annotations of the script: see [7.6](#76-comments). There are no block comments.
 
 ## 5. Names and references
 
@@ -276,37 +279,77 @@ The symbol table (#38) formats and resolves references. For an entry of a collec
   entry that has a unique name. A name that matches no entry, or matches several, is an error
   that lists the candidate ids.
 
-### 5.3 Self switches
+### 5.3 Global state
 
-Self switches aren't database entries, so they aren't symbols: `selfSwitches.A` to
-`selfSwitches.D`, always of the current event.
+The script's globals are the engine's global state, plus the collections of
+[5.1](#51-collections) and the commands of [section 8](#8-commands-by-group). They are declared
+once, in a types package that each document references on its first line
+([6.1](#61-documents)):
+
+| Global                      | What it is                                                                                                                                                |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `map`                       | The current map. `map.events` are its events ([5.5](#55-characters))                                                                                      |
+| `troop`                     | The troop of the current battle: `troop.members[i]`, `troop.turn(…)`                                                                                      |
+| `party`                     | The party: `party.gold`, `party.has(items.X)`, `party.members[i]`                                                                                         |
+| `player`                    | The player character                                                                                                                                      |
+| `timer`, `input`, `game`    | The timer, button input, and game-wide counters (`game.playTime`, `game.saveCount`)                                                                       |
+| `choice`, `page`, `define…` | The building blocks of choices ([8.2](#82-messages-comments-scripts-and-plugin-commands)) and containers ([section 6](#6-documents-containers-and-pages)) |
+
+`map` and `troop` are "current" in the same way the engine's `$gameMap` and `$gameTroop` are: a
+common event that runs in battle can use `troop.members[0]` just like a troop page.
+
+### 5.4 The running event and self switches
+
+Commands run for an event ([section 2](#2-mv-concepts-in-brief)). Every body receives it as its
+parameter, which the printer names `event`:
+
+| Body                                              | `event` is                                                                |
+| ------------------------------------------------- | ------------------------------------------------------------------------- |
+| A map event's page                                | That map event                                                            |
+| A common event called by others                   | The event that called it, directly or through other common events         |
+| An autorun or parallel common event, a troop page | No event. Self-switch commands do nothing, as in the engine (#7 can warn) |
+
+Self switches are properties of the event:
 
 ```ts
-selfSwitches.A = true;
-if (selfSwitches.B) { … }
+defineCommonEvent({ id: 12, name: "Open chest", trigger: "none" }, (event) => {
+	if (!event.selfSwitches.A) {
+		changeItems(items.Potion, +1);
+		event.selfSwitches.A = true;
+	}
+});
 ```
 
-### 5.4 Characters
+- `event.selfSwitches.A` to `event.selfSwitches.D`.
+- `event` is also a character ([5.5](#55-characters)).
+- The printer adds the parameter only when the body uses it: `() => { … }` otherwise.
+- The parser accepts any parameter name.
+
+Because a called common event gets its caller as `event`, code moves between a page and a
+common event unchanged, and each caller keeps its own self switches.
+
+### 5.5 Characters
 
 Several commands act on a **character**: something on the map that can move and show
-animations. MV stores it as a number: `-1` the player, `0` the event that is running, and a
-positive number for another event on the current map.
+animations. MV stores it as a number: `-1` the player, `0` the running event, and a positive
+number for another event on the current map.
 
-| Form          | Meaning                           |
-| ------------- | --------------------------------- |
-| `player`      | The player (`-1`)                 |
-| `thisEvent`   | The event that is running (`0`)   |
-| `events.Gate` | Another event on the map, by name |
-| `events[12]`  | Another event on the map, by id   |
+| Form              | Meaning                                       |
+| ----------------- | --------------------------------------------- |
+| `player`          | The player (`-1`)                             |
+| `event`           | The running event, the body's parameter (`0`) |
+| `map.events.Gate` | Another event on the current map, by name     |
+| `map.events[12]`  | Another event on the current map, by id       |
 
-Map events are not database entries: each map has its own events, numbered from 1. So `events`
-is scoped to a map and uses the rules of [5.2](#52-reference-forms) among the events of that
-map. Only a map event's script knows its map, so a common event or a troop always uses the id
-form `events[12]`, which means "event 12 of whatever map is current when this runs".
+Map events are not database entries: each map has its own events, numbered from 1. So
+`map.events` uses the rules of [5.2](#52-reference-forms) among the events of one map. Only a
+map event's script knows its map, so a common event or a troop always uses the id form
+`map.events[12]`, which means "event 12 of whatever map is current when this runs".
 
-`thisEvent` and the event's own id are different data (`0` vs `12`), and each prints as stored.
+`event` and the event's own id are different data (`0` vs `12`), and each prints as stored:
+`event` or `map.events.Old_gate`.
 
-### 5.5 Values from variables
+### 5.6 Values from variables
 
 Many MV commands take either a constant or "the value of variable N". The script writes the
 variable reference in place of the number:
@@ -326,71 +369,66 @@ battle(troops[variables.Next_troop]); // the troop whose id is in variable Next_
 
 The compiler derives the "designation" parameter (constant or variable) from which form is used.
 
-### 5.6 Enumerations and options
+### 5.7 Enumerations and options
 
 - **Enum values** print as string literals using the catalog's value names (`"dim"`,
   `"middle"`, `"up"`). A value the catalog doesn't know prints as its number.
-- **Options** are an object literal as the last argument, with identifier keys:
-  `showText({ background: "dim" }, "…")`. Options with default values are left out.
+- **Options** are an object literal with identifier keys, as the last argument. Commands that
+  take any number of text lines (Show Text, Show Scrolling Text) put options first so the lines
+  can follow: `showText({ background: "dim" }, "…")`. Options with default values are left out.
 - **Booleans** are `true` and `false`.
 
-## 6. Containers and pages
+## 6. Documents, containers and pages
 
-A **container** is a common event, a map event or a troop. Its header is a decorator. A script
-document holds one or more containers; how the editor splits a project into documents is up to
-#4 (one map's events naturally share a document, because `events.X` is scoped to the map).
+### 6.1 Documents
 
-### 6.1 Names of functions and classes
+A document starts with a reference to the types package that declares the globals, as Vite
+projects do with `/// <reference types="vite/client" />`:
 
-A container prints as a `function` (common events) or a `class` (map events, troops). Its name is
-the container's MV name when that name:
+```ts
+/// <reference types="rpgmv-event-tools" />
+```
 
-1. is a valid identifier ([4.2](#42-identifiers-and-reserved-words)),
-2. is not a reserved word,
-3. is unique among the containers of its kind (common events in the database, events on the same
-   map, troops in the database), and
-4. doesn't look like another container's fallback name (below).
+The printer writes it. The parser accepts it and ignores it, and doesn't require it.
 
-Otherwise the name is a **fallback**, `commonEvent<id>`, `event<id>` or `troop<id>` (for example
-`commonEvent12`), and the decorator carries the exact MV name as `name: "…"`, even when it is
-empty (`name: ""`). A name like `troop7` counts as a fallback name, so it is used as the class
-name only by troop 7 itself.
+After it come one or more **containers** (common events, map events, troops), each a call as a
+top-level statement, separated by blank lines. How the editor splits a project into documents is
+up to #4. One map's events naturally share a document, because `map.events` names are scoped to
+the map.
 
-The compiler takes the MV name from `name` when present, otherwise from the function or class
-name. The decorator's `id` says which container it is.
-
-In the test game, 325 of 600 common events and 226 of 300 troops have identifier names. Most
-map events keep the editor's default name `EV001`, which is an identifier.
+Container options carry the MV name as a plain string, always printed, so container names need
+no identifier rules. Containers are referred to elsewhere through the symbol table
+(`commonEvents.Open_chest()`).
 
 ### 6.2 Common events
 
 ```ts
-@commonEvent({ id: 3, trigger: "parallel", switch: switches.Rain_falling })
-function Rain_sounds() {
-	…
-}
+defineCommonEvent(
+	{ id: 3, name: "Rain sounds", trigger: "parallel", switch: switches.Rain_falling },
+	() => {
+		…
+	},
+);
 ```
 
-| Key       | Values                                                                                    |
-| --------- | ----------------------------------------------------------------------------------------- |
-| `id`      | The common event's id                                                                     |
-| `name`    | Only when the function name isn't the MV name ([6.1](#61-names-of-functions-and-classes)) |
-| `trigger` | `"none"` (only runs when called), `"autorun"`, `"parallel"`                               |
-| `switch`  | The switch that runs it. Printed only when `trigger` isn't `"none"`                       |
+| Key       | Values                                                              |
+| --------- | ------------------------------------------------------------------- |
+| `id`      | The common event's id                                               |
+| `name`    | The MV name, exactly                                                |
+| `trigger` | `"none"` (only runs when called), `"autorun"`, `"parallel"`         |
+| `switch`  | The switch that runs it. Printed only when `trigger` isn't `"none"` |
+
+The second argument is the body ([5.4](#54-the-running-event-and-self-switches)).
 
 ### 6.3 Map events
 
 ```ts
-@event({ id: 4, x: 12, y: 8 })
-class Old_gate {
-	@page({ trigger: "action" })
-	page1() {
+defineMapEvent({ id: 4, name: "Old gate", x: 12, y: 8 }, [
+	page({ trigger: "action" }, (event) => {
 		…
-	}
-
-	@page({ trigger: "action", when: selfSwitches.A })
-	page2() {}
-}
+	}),
+	page({ trigger: "action", when: (event) => event.selfSwitches.A }, () => {}),
+]);
 ```
 
 | Key            | Values                                                                                 |
@@ -400,8 +438,7 @@ class Old_gate {
 | page `trigger` | `"action"` (action button), `"playerTouch"`, `"eventTouch"`, `"autorun"`, `"parallel"` |
 | page `when`    | The page conditions ([6.5](#65-page-conditions-when)). Left out when there are none    |
 
-- Pages are methods named `page1`, `page2`, … in order. Their position is what counts: the
-  method names are for reading.
+- The pages are an array. Their order is the page order.
 - `trigger` is always printed, because the default isn't obvious to a new reader.
 - A page's graphic, priority, movement settings and autonomous move route aren't part of the
   script. They are kept from the file (principle 4).
@@ -409,13 +446,11 @@ class Old_gate {
 ### 6.4 Troops
 
 ```ts
-@troop({ id: 7, name: "Cave bats" })
-class troop7 {
-	@page({ span: "battle", when: turn(0) })
-	page1() {
+defineTroop({ id: 7, name: "Cave bats" }, [
+	page({ span: "battle", when: () => troop.turn(0) }, () => {
 		…
-	}
-}
+	}),
+]);
 ```
 
 | Key          | Values                                                                                            |
@@ -425,41 +460,42 @@ class troop7 {
 | page `when`  | The page conditions ([6.5](#65-page-conditions-when))                                             |
 
 The troop's enemies and their positions aren't part of the script (principle 4). Hovers on
-`members[i]` show which enemy a member is.
+`troop.members[i]` show which enemy a member is.
 
 ### 6.5 Page conditions (`when`)
 
-A page's conditions are a conjunction (`&&`) of checks. Each kind of check appears at most once
-(map pages allow two switches). There is no `||`, `!` or parentheses, because MV has no such
+A page's conditions are an arrow function returning a conjunction (`&&`) of checks. A map page's
+function may take the event, for its self switch. Each kind of check appears at most once (map
+pages allow two switches). There is no `||`, `!` or parentheses, because MV has no such
 conditions.
 
 **Map event pages:**
 
 ```ebnf
-MapWhen  = MapCheck { "&&" MapCheck } ;
+MapWhen  = "(" [ Param ] ")" "=>" MapCheck { "&&" MapCheck } ;
 MapCheck = SwitchRef                          (* switch 1 or 2: the switch is ON *)
          | VariableRef ">=" Integer           (* the variable is at least the value *)
-         | "selfSwitches." ( "A" | "B" | "C" | "D" )
+         | Param ".selfSwitches." ( "A" | "B" | "C" | "D" )
          | "party.has(" ItemRef ")"           (* the party has the item *)
          | "party.has(" ActorRef ")" ;        (* the actor is in the party *)
 ```
 
-Example: `when: switches.Gate_open && variables.Day >= 3 && party.has(items.Lantern)`.
+Example: `when: () => switches.Gate_open && variables.Day >= 3 && party.has(items.Lantern)`.
 
 **Troop pages:**
 
 ```ebnf
-TroopWhen  = TroopCheck { "&&" TroopCheck } ;
-TroopCheck = "turnEnd"                                    (* at the end of a turn *)
-           | "turn(" Integer [ "," Integer ] ")"          (* turn a, or turn a then every b turns *)
-           | "members[" Integer "].hpPercent" "<=" Integer (* troop member's HP, in percent *)
-           | ActorRef ".hpPercent" "<=" Integer           (* actor's HP, in percent *)
-           | SwitchRef ;                                  (* the switch is ON *)
+TroopWhen  = "()" "=>" TroopCheck { "&&" TroopCheck } ;
+TroopCheck = "troop.turnEnding"                                 (* at the end of a turn *)
+           | "troop.turn(" Integer [ "," Integer ] ")"          (* turn a, or turn a then every b turns *)
+           | "troop.members[" Integer "].hpPercent" "<=" Integer (* troop member's HP, in percent *)
+           | ActorRef ".hpPercent" "<=" Integer                 (* actor's HP, in percent *)
+           | SwitchRef ;                                        (* the switch is ON *)
 ```
 
-`turn(a, b)` holds on turn `a`, then every `b` turns (`turn(2, 3)`: turns 2, 5, 8, …). `turn(0)`
-is the start of the battle. Troop members are numbered from 0 in the order of the troop's
-member list.
+`troop.turn(a, b)` holds on turn `a`, then every `b` turns (`troop.turn(2, 3)`: turns 2, 5,
+8, …). `troop.turn(0)` is the start of the battle. Troop members are numbered from 0 in the order
+of the troop's member list.
 
 **Printing and compiling.**
 
@@ -479,15 +515,13 @@ member list.
 
 Most commands are calls: `name(arguments);`. Unless [section 8](#8-commands-by-group) says
 otherwise, `name` is the command's catalog name (`showText`, `fadeoutScreen`, …) and arguments
-are its parameters in catalog order, with options last.
+are its parameters in catalog order, with options last. Some commands have more natural forms:
+assignments (`switches.X = true;`) and calls on a reference (`commonEvents.Heal_party();`).
 
-Some commands have more natural forms: assignments (`switches.X = true;`), calls on a reference
-(`commonEvents.Heal_party();`), or keywords (`break;`, `return;`).
+### 7.2 Conditional branches
 
-### 7.2 Blocks
-
-Commands that contain other commands are blocks. Conditional branches and loops use
-TypeScript's own syntax:
+MV's Conditional Branch is truly lexical: when the condition is false, the engine skips to the
+Else or End at the same indent. So it uses TypeScript's own `if`:
 
 ```ts
 if (switches.Door_open) {
@@ -497,11 +531,6 @@ if (switches.Door_open) {
 } else {
 	…
 }
-
-while (true) {
-	…
-	break;
-}
 ```
 
 - `else if` is shorthand for an `else` whose body is exactly one conditional branch. The
@@ -509,24 +538,86 @@ while (true) {
 - An empty `else {}` is printed when the list has an Else branch with no commands, because MV
   records whether the branch exists.
 
-Other block commands have no TypeScript equivalent. They are a call followed by a body of named
-branches, similar to the MV editor's own layout:
+### 7.3 Loops and jumps
+
+MV's loop and jump commands are **jumps through the command list at run time**, not lexical
+control flow, so they are calls rather than TypeScript's keywords:
+
+| Code(s)   | Command               | Script                                                         |
+| --------- | --------------------- | -------------------------------------------------------------- |
+| 112 / 413 | Loop                  | `loop((loop) => { … });`                                       |
+| 113       | Break Loop            | `loop.break();` inside a loop, `breakLoop();` outside any loop |
+| 115       | Exit Event Processing | `exitEventProcessing();`                                       |
+| 118       | Label                 | `label("Start");`                                              |
+| 119       | Jump to Label         | `jumpTo("Start");`                                             |
 
 ```ts
-showChoices({ cancel: 1 }) {
-	when("Yes") {
-		…
+loop((loop) => {
+	variables.Tries += 1;
+	if (variables.Tries >= 3) {
+		loop.break();
 	}
-	when("No") {}
-}
+});
 ```
 
-The choice block, battle processing and move routes use this form ([8.2](#82-messages-comments-scripts-and-plugin-commands),
-[8.3](#83-movement-characters-screen-audio-and-pictures), [8.4](#84-battle-and-remaining-commands)).
-A choice block deliberately isn't a `switch` statement: in TypeScript, `break` inside a `case`
-would leave the `switch`, but in MV it leaves the enclosing loop.
+- **Break Loop** scans forward for the end of the innermost enclosing loop. A called common event
+  runs separately, so it can't break its caller's loop. Every Break Loop that breaks a loop is
+  therefore inside that loop's body, where the body's parameter (printed `loop`, any name
+  accepted) names it.
+- **Break Loop outside any loop** finds no loop end, and the engine runs to the end of the list:
+  it acts as "stop here". It is still its own command, so it prints as the global
+  `breakLoop();`, and hovers explain it. In the test game, 3,911 of 3,989 Break Loops are outside
+  any loop, mostly inside choice branches.
+- **Exit Event Processing** ends the current command list. For a called common event, that
+  returns to the caller.
+- Labels can contain spaces, so they are strings.
 
-### 7.3 Comments
+**Why not `break` and `return`?** `break` outside a loop isn't valid TypeScript, and inside the
+arrow functions of [7.4](#74-commands-with-branches) neither `break` nor `return` could reach an
+enclosing loop or event. Calls have no such limits, and they match what the engine does.
+
+### 7.4 Commands with branches
+
+Show Choices and Battle Processing run one of several bodies. Each body is an arrow function:
+
+```ts
+showChoices(
+	[
+		choice("Yes", () => {
+			…
+		}),
+		choice("No", () => {}),
+	],
+	{ cancel: 1 },
+);
+
+battle(troops.Cave_bats, {
+	onWin: () => {
+		…
+	},
+	onEscape: () => {},
+});
+```
+
+The details are in [8.2](#82-messages-comments-scripts-and-plugin-commands) and
+[8.4](#84-battle-and-remaining-commands). A branch MV records prints even when it is empty
+(`() => {}`).
+
+### 7.5 Builders: routes and shop goods
+
+A move route and a shop's goods are lists of data, not code: a route is steps a character follows
+on its own, with no conditions or jumps. They are method chains on the command:
+
+```ts
+setMovementRoute(map.events.Guard, { skippable: true }).moveLeft().turnRight().wait(15);
+
+shop({ purchaseOnly: true }).goods(items.Potion).goods(weapons.Club, { price: 50 });
+```
+
+A chain can only hold its own methods, so it states what is allowed. Route steps don't exist as
+globals, so a route's `wait` can't be confused with the command `wait`.
+
+### 7.6 Comments
 
 A Comment command (`108`, plus a `408` for each further line) prints as `//` lines, one per line
 of text:
@@ -542,8 +633,8 @@ showText("…");
 - Consecutive `//` lines form one Comment command. A blank line between two runs of `//` lines
   starts a new Comment command.
 - Comments are commands, so they only appear on their own lines inside a body. A comment after a
-  statement on the same line is an error. A comment outside any body (between pages, before a
-  container) is not saved, and the compiler warns about it.
+  statement on the same line is an error. A comment outside any body (between containers, or
+  between pages) is not saved, and the compiler warns about it.
 - When `//` lines wouldn't round-trip (a line ends with whitespace that an editor might trim; the
   test game has 7), the printer writes `comment("line 1", "line 2");` instead. The parser accepts
   that form anywhere.
@@ -553,7 +644,7 @@ comments by the game's author, and `//` is where a reader looks for them. Making
 comment also means comments the user writes are saved, rather than silently dropped on compile.
 Plugin tags in comments (`<follower touch>`) stay exactly as written.
 
-### 7.4 Raw fallback
+### 7.7 Raw fallback
 
 Any command without dedicated syntax, or whose data the dedicated syntax can't reproduce exactly,
 prints as:
@@ -572,25 +663,22 @@ command(232, [1, 0, 0, 0, 408, 312, 100, 100, 255, 0, 60, true]);
 ## 8. Commands by group
 
 In the tables, `…` stands for more arguments of the same kind, `{ opts }` for the options object,
-and `character` for a [character reference](#54-characters).
+and `character` for a [character reference](#55-characters).
 
 ### 8.1 Flow control and game state
 
 **Outline** (#41 finalizes).
 
-| Code(s)         | Command               | Script                                                                    |
-| --------------- | --------------------- | ------------------------------------------------------------------------- |
-| 111 / 411 / 412 | Conditional Branch    | `if (condition) { … } else { … }`; conditions below                       |
-| 112 / 413       | Loop                  | `while (true) { … }`                                                      |
-| 113             | Break Loop            | `break;`                                                                  |
-| 115             | Exit Event Processing | `return;`                                                                 |
-| 117             | Common Event          | `commonEvents.Heal_party();`                                              |
-| 118             | Label                 | `label("Start");`                                                         |
-| 119             | Jump to Label         | `jumpTo("Start");`                                                        |
-| 121             | Control Switches      | `switches.Door_open = true;`, ranges `switches[10..15] = false;`          |
-| 122             | Control Variables     | `variables.Gold_found = 5;`, operators `= += -= *= /= %=`; operands below |
-| 123             | Control Self Switch   | `selfSwitches.A = true;`                                                  |
-| 124             | Control Timer         | `timer.start(90);` (seconds), `timer.stop();`                             |
+| Code(s)         | Command             | Script                                                                                                              |
+| --------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 111 / 411 / 412 | Conditional Branch  | `if (condition) { … } else { … }`; conditions below                                                                 |
+| 112, 113, 115   | Loop, Break, Exit   | See [7.3](#73-loops-and-jumps)                                                                                      |
+| 117             | Common Event        | `commonEvents.Heal_party();`                                                                                        |
+| 118, 119        | Label, Jump         | See [7.3](#73-loops-and-jumps)                                                                                      |
+| 121             | Control Switches    | `switches.Door_open = true;`, ranges `switches.range(10, 15).set(false);`                                           |
+| 122             | Control Variables   | `variables.Gold_found = 5;`, operators `= += -= *= /= %=`, ranges `variables.range(10, 15).add(1);`; operands below |
+| 123             | Control Self Switch | `event.selfSwitches.A = true;`                                                                                      |
+| 124             | Control Timer       | `timer.start(90);` (seconds), `timer.stop();`                                                                       |
 
 **Conditions of `111`**, by condition type:
 
@@ -598,11 +686,11 @@ and `character` for a [character reference](#54-characters).
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | switch      | `switches.X` (ON), `!switches.X` (OFF)                                                                                                                                                                       |
 | variable    | `variables.X >= 5`, `variables.X === variables.Y`; operators `=== >= <= > < !==` (parser also takes `==`, `!=`)                                                                                              |
-| self switch | `selfSwitches.A`, `!selfSwitches.A`                                                                                                                                                                          |
+| self switch | `event.selfSwitches.A`, `!event.selfSwitches.A`                                                                                                                                                              |
 | timer       | `timer.seconds >= 60`, `timer.seconds <= 60`                                                                                                                                                                 |
 | actor       | `party.has(actors.X)`, `actors.X.name === "…"`, `actors.X.class === classes.Y`, `actors.X.hasSkill(skills.Y)`, `actors.X.hasWeapon(weapons.Y)`, `actors.X.hasArmor(armors.Y)`, `actors.X.hasState(states.Y)` |
-| enemy       | `members[0].appeared`, `members[0].hasState(states.Y)`                                                                                                                                                       |
-| character   | `player.direction === "up"`, `events.Guard.direction === "left"`                                                                                                                                             |
+| enemy       | `troop.members[0].appeared`, `troop.members[0].hasState(states.Y)`                                                                                                                                           |
+| character   | `player.direction === "up"`, `map.events.Guard.direction === "left"`                                                                                                                                         |
 | gold        | `party.gold >= 100`, `party.gold <= 100`, `party.gold < 100`                                                                                                                                                 |
 | item        | `party.has(items.X)`                                                                                                                                                                                         |
 | weapon      | `party.has(weapons.X)`, `party.has(weapons.X, { includeEquipment: true })`                                                                                                                                   |
@@ -618,8 +706,8 @@ and `character` for a [character reference](#54-characters).
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | item, weapon, armor | `party.count(items.X)` (how many the party has)                                                                                                                      |
 | actor               | `actors.X.level`, `.exp`, `.hp`, `.mp`, `.maxHp`, `.maxMp`, `.attack`, … (the catalog's parameter names)                                                             |
-| enemy               | `members[0].hp`, `.mp`, `.maxHp`, …                                                                                                                                  |
-| character           | `player.x`, `thisEvent.y`, `events.Guard.direction`, `.screenX`, `.screenY`                                                                                          |
+| enemy               | `troop.members[0].hp`, `.mp`, `.maxHp`, …                                                                                                                            |
+| character           | `player.x`, `event.y`, `map.events.Guard.direction`, `.screenX`, `.screenY`                                                                                          |
 | party               | `party.members[0]` (the actor id of the first member)                                                                                                                |
 | other               | `game.mapId`, `party.size`, `party.gold`, `party.steps`, `game.playTime`, `timer.seconds`, `game.saveCount`, `game.battleCount`, `game.winCount`, `game.escapeCount` |
 
@@ -647,16 +735,16 @@ type in the test game):
 | Code(s)               | Command             | Script                                                             |
 | --------------------- | ------------------- | ------------------------------------------------------------------ |
 | 101 + 401             | Show Text           | `showText({ opts }, "line", …);` (see below)                       |
-| 102 / 402 / 403 / 404 | Show Choices        | choice block (see below)                                           |
+| 102 / 402 / 403 / 404 | Show Choices        | `showChoices([choice(…), …], { opts });` (see below)               |
 | 103                   | Input Number        | `inputNumber(variables.Code, 4);` (variable, digits)               |
 | 104                   | Select Item         | `selectItem(variables.Chosen, "keyItem");`                         |
 | 105 + 405             | Show Scrolling Text | `showScrollingText({ speed: 3, noFastForward: true }, "line", …);` |
-| 108 + 408             | Comment             | `//` lines ([7.3](#73-comments))                                   |
+| 108 + 408             | Comment             | `//` lines ([7.6](#76-comments))                                   |
 | 355 + 655             | Script              | `script("line", …);`                                               |
 | 356                   | Plugin Command      | `plugin.Head(arg, …);` or `plugin("…");` (see below)               |
 
-**Show Text.** Each text line (`401`) is one string argument. One line prints on one line; two or
-more print one per line:
+**Show Text.** Each text line (`401`) is one string argument, after the options. One line prints
+on one line; two or more print one per line:
 
 ```ts
 showText("Just one line.");
@@ -670,31 +758,40 @@ showText(
 Options and their defaults (the MV editor's): `face: ""`, `faceIndex: 0`, `background:
 "window"` (`"dim"`, `"transparent"`), `position: "bottom"` (`"top"`, `"middle"`).
 
-**Show Choices.** One `when` branch per choice, in order, with the choice text. The texts are not
-repeated anywhere else (the `402` copies are derived):
+**Show Choices.** An array of `choice(text, body)`, one per choice in order, then the options:
 
 ```ts
-showChoices({ cancel: "branch", position: "middle" }) {
-	when("Buy") {
-		…
-	}
-	when("Sell") {
-		…
-	}
-	whenCancel {
-		…
-	}
-}
+showChoices(
+	[
+		choice("Buy", () => {
+			…
+		}),
+		choice("Sell", () => {
+			…
+		}),
+	],
+	{
+		cancel: 2,
+		position: "middle",
+		onCancel: () => {
+			…
+		},
+	},
+);
 ```
 
+- The texts are not repeated anywhere else (the `402` copies are derived).
+- It is an array rather than an object keyed by text (`{ Buy: () => … }`) because texts can
+  repeat, and JavaScript would put number-like keys such as `"1"` first.
 - `cancel` says what the cancel button does: `"disallow"` (`-1`), a choice index from 0 (acts as
-  that choice), or `"branch"` (runs the `whenCancel` branch). It is always printed, because the
-  MV editor's default (choice index 1) is easy to misread.
+  that choice), or a number at or beyond the number of choices, which the engine treats as "run
+  the When Cancel branch". It is always printed, because the MV editor's default (choice index 1)
+  is easy to misread. Which number the editor writes for "branch" is an
+  [open question](#11-open-questions), so such values print as numbers.
+- `onCancel` is the When Cancel branch (`403`), present exactly when the list has one.
 - Other options: `default` (the initially selected choice index, or `"none"`; default `0`),
   `position` (`"left"`, `"middle"`, `"right"`; default `"right"`), `background` (as for Show
   Text; default `"window"`).
-- To settle in #42: which stored value `"branch"` stands for. The engine treats any value at or
-  beyond the number of choices as "branch"; the printer must keep the exact number.
 
 **Script.** Each line of JavaScript is one string, laid out like Show Text. Editor support for
 the embedded JavaScript is #7.
@@ -727,7 +824,7 @@ In the test game, 48,014 of 48,016 plugin commands split cleanly. Per-plugin syn
 
 | Code(s)          | Command              | Script                                                                                                  |
 | ---------------- | -------------------- | ------------------------------------------------------------------------------------------------------- |
-| 205 + 505        | Set Movement Route   | route block (see below)                                                                                 |
+| 205 + 505        | Set Movement Route   | route builder (see below)                                                                               |
 | 201              | Transfer Player      | `transferPlayer(maps.Forest, 10, 5, { direction: "up", fade: "white" });`                               |
 | 202              | Set Vehicle Location | `setVehicleLocation("boat", maps.Harbor, 4, 9);`                                                        |
 | 203              | Set Event Location   | `setEventLocation(character, 3, 4, { direction: "down" });`, or `{ swapWith: character }`               |
@@ -749,79 +846,81 @@ In the test game, 48,014 of 48,016 plugin commands split cleanly. Per-plugin syn
 | 231–235          | Pictures             | `showPicture(1, "Map_overlay", { x: 0, y: 0, opacity: 200 });`, `movePicture(…)`, `erasePicture(1);`, … |
 
 Audio defaults (left out): `volume: 90`, `pitch: 100`, `pan: 0`. Movement arguments follow
-[5.5](#55-values-from-variables): `transferPlayer(maps[variables.To_map], variables.To_x,
+[5.6](#56-values-from-variables): `transferPlayer(maps[variables.To_map], variables.To_x,
 variables.To_y)` uses variables.
 
-**Move routes.** A route is a block of move steps. Each step is a call to its move-command
-catalog name (`MOVE_ROUTE_COMMANDS`):
+**Move routes.** A route is a builder ([7.5](#75-builders-routes-and-shop-goods)): each step is a
+method named by its move-command catalog name (`MOVE_ROUTE_COMMANDS`):
 
 ```ts
-setMovementRoute(player, { skippable: true }) {
-	turnUp();
-	moveUp();
-	wait(15);
-	playSe("Knock");
-	script("this.setOpacity(128)");
-}
+setMovementRoute(player, { skippable: true })
+	.turnUp()
+	.moveUp()
+	.moveUp({ indent: 0 })
+	.wait(15)
+	.playSe("Knock")
+	.script("this.setOpacity(128)");
 ```
 
 - Options and defaults (the MV editor's): `repeat: false`, `skippable: false`, `wait: true`.
-- Inside a route body only move steps are allowed, so `wait(15)` is the move-route Wait.
+- A route with no steps is just the call: `setMovementRoute(player);`.
 - The `505` lines after a `205` are copies of the steps, and the route's final `{ "code": 0 }`
   is its terminator. Both are derived.
-- To settle in #43: 3,369 steps in the test game store `indent: 0` instead of the usual `null`.
-  The engine ignores a step's indent, and the `0`s look like an editor artifact: they are spread
-  over 17 step codes and mostly sit mid-route, and 1,030 routes mix `0` and `null` steps. So a
-  route-level option can't keep them. It has to be per step, for example an option like the raw
-  fallback's (`moveUp({ indent: 0 });`) or a raw step form (`step({ … })`).
+- **Step indents.** Steps store `indent: null`, and nothing reads a step's indent. But 3,369 steps
+  in the test game store `indent: 0`: an editor artifact spread over 17 step codes, mostly
+  mid-route, with 1,030 routes mixing `0` and `null`. So it is kept per step, as the option
+  `{ indent: 0 }` on that step.
 
 ### 8.4 Battle and remaining commands
 
 **Outline** (#44 finalizes).
 
-**Battle Processing** (`301`) prints as a plain call when it has no result branches, and as a
-block otherwise:
+**Battle Processing** (`301`) is a plain call when it has no result branches, and takes its
+branches as handlers otherwise:
 
 ```ts
 battle(troops.Cave_bats);
 
-battle(troops[variables.Next_troop]) {
-	ifWin {
+battle(troops[variables.Next_troop], {
+	onWin: () => {
 		…
-	}
-	ifEscape {
+	},
+	onEscape: () => {
 		…
-	}
-	ifLose {
+	},
+	onLose: () => {
 		…
-	}
-}
+	},
+});
 ```
 
 - The troop is `troops.X`, `troops[variables.V]`, or `"randomEncounter"` (the map's encounter
   list).
-- The branches are `ifWin` (`601`), `ifEscape` (`602`) and `ifLose` (`603`). The flags Can
-  Escape and Can Lose are not printed: they are true exactly when the `ifEscape` and `ifLose`
-  branches are present. In the test game, 288 battles have no branches, 1,180 have win and escape,
-  and 316 have all three.
+- The handlers are `onWin` (`601`), `onEscape` (`602`) and `onLose` (`603`). MV writes the win
+  branch whenever there are branches, so `onWin` is then always printed, even empty.
+- The flags Can Escape and Can Lose are not printed: they are true exactly when `onEscape` and
+  `onLose` are present. In the test game, 288 battles have no branches, 1,180 have win and
+  escape, and 316 have all three.
 
 **Actors and enemies.** Actor commands take `actors.X`, `actors[variables.V]` or `party` (the
-whole party). Enemy commands take `members[i]` (a troop member, from 0) or `members.all`. An
-amount with an operation prints signed: `+10` increases, `-variables.Damage` decreases.
+whole party). Enemy commands take `troop.members[i]` (a troop member, from 0) or `troop` (the
+whole troop). An amount with an operation prints signed: `+10` increases, `-variables.Damage`
+decreases.
 
 | Code(s)           | Command                     | Script                                                                                                                                                            |
 | ----------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 302 + 605         | Shop Processing             | `shop({ purchaseOnly: true }) { goods(items.Potion); goods(weapons.Club, { price: 50 }); }`                                                                       |
+| 302 + 605         | Shop Processing             | `shop({ purchaseOnly: true }).goods(items.Potion).goods(weapons.Club, { price: 50 });`                                                                            |
 | 125               | Change Gold                 | `changeGold(+100);`                                                                                                                                               |
 | 126–128           | Change Items/Weapons/Armors | `changeItems(items.Potion, +1);`, `changeWeapons(weapons.Club, -1, { includeEquipment: true });`                                                                  |
 | 129               | Change Party Member         | `changePartyMember(actors.Mira, "add", { initialize: true });`                                                                                                    |
 | 311–326           | Actor commands              | `changeHp(party, -10, { allowKnockout: false });`, `changeState(actors.Mira, "add", states.Poison);`, `recoverAll(party);`, `changeName(actors.Mira, "Mira");`, … |
-| 331–340, 342      | Enemy commands              | `changeEnemyHp(members[0], -50);`, `enemyAppear(members[2]);`, `forceAction(members[0], skills.Bite, "random");`, `abortBattle();`, …                             |
+| 331–340, 342      | Enemy commands              | `changeEnemyHp(troop.members[0], -50);`, `enemyAppear(troop.members[2]);`, `forceAction(troop.members[0], skills.Bite, "random");`, `abortBattle();`, …           |
 | 132–140, 322, 323 | System settings             | `changeBattleBgm("Battle2");`, `changeSaveAccess(false);`, `changeWindowColor([0, 0, 64, 0]);`, …                                                                 |
 | 281–285           | Map commands                | `changeMapNameDisplay(true);`, `changeTileset(tilesets.Dungeon);`, `getLocationInfo(variables.Tile, "regionId", 5, 6);`, …                                        |
 | 303, 351–354      | Scene control               | `nameInputProcessing(actors.Mira, 8);`, `openMenuScreen();`, `gameOver();`, …                                                                                     |
 
-#44 also records any catalog code that deliberately keeps the raw fallback.
+The shop's first item is stored in `302` and the rest in `605` lines; the builder lists them all
+as `.goods(…)`. #44 also records any catalog code that deliberately keeps the raw fallback.
 
 ## 9. Data the script leaves out
 
@@ -831,14 +930,14 @@ The compiler regenerates all of this:
 | ---------------------------------------------- | ---------------------------------------------------------------------------- |
 | `indent` of every command                      | It is the nesting depth (the raw fallback prints it when it differs)         |
 | `0` terminators                                | One ends every branch body and every list                                    |
-| Block ends `412`, `404`, `413`, `604`          | They are the closing `}` of the block                                        |
-| Branch starts `411`, `402`, `403`, `601`–`603` | They are `else`, `when`, `whenCancel`, `ifWin`, …                            |
-| The choice index and text in `402`             | The index is the branch's position; the text is a copy from `102`            |
+| Block ends `412`, `404`, `413`, `604`          | They are the end of the `if`, choice array, loop body or battle handlers     |
+| Branch starts `411`, `402`, `403`, `601`–`603` | They are `else`, `choice(…)`, `onCancel`, `onWin`, `onEscape`, `onLose`      |
+| The choice index and text in `402`             | The index is the choice's position; the text is a copy from `102`            |
 | `505` Movement Route Step lines                | Copies of the route's steps                                                  |
 | A move route's final `{ "code": 0 }`           | It ends every route                                                          |
 | Parameter counts of `111` and `122`            | Fixed by condition and operand type ([8.1](#81-flow-control-and-game-state)) |
-| Can Escape and Can Lose of `301`               | Present exactly when the `ifEscape` and `ifLose` branches are                |
-| Designation parameters                         | Whether a constant or a variable is used ([5.5](#55-values-from-variables))  |
+| Can Escape and Can Lose of `301`               | Present exactly when the `onEscape` and `onLose` handlers are                |
+| Designation parameters                         | Whether a constant or a variable is used ([5.6](#56-values-from-variables))  |
 | Options at their default value                 | The compiler writes the default                                              |
 
 Kept from the file instead (principle 4): page graphics and movement settings, troop members,
@@ -848,80 +947,124 @@ unused page-condition slots, and a common event's switch while its trigger is `"
 
 These examples are invented, and use syntax from the outlines above.
 
-### 10.1 A common event
+### 10.1 Common events
 
-An inn: the player chooses whether to rest, pays if they can, and the screen fades while the
-party recovers.
+A chest that any event can call, and a parallel common event with no running event.
 
 ```ts
-@commonEvent({ id: 12, name: "Rest at inn", trigger: "none" })
-function commonEvent12() {
-	showText({ face: "Innkeeper", faceIndex: 1 }, "A bed for the night is 50\G.");
-	showChoices({ cancel: 1 }) {
-		when("Stay") {
-			if (party.gold >= 50) {
-				changeGold(-50);
-				fadeoutScreen();
-				playMe("Inn");
-				recoverAll(party);
-				variables.Nights_rested += 1;
-				fadeinScreen();
-				showText("\N[1] feels rested.");
-			} else {
-				showText("You can't afford it.");
-			}
-		}
-		when("Leave") {}
+/// <reference types="rpgmv-event-tools" />
+
+defineCommonEvent({ id: 12, name: "Open chest", trigger: "none" }, (event) => {
+	if (event.selfSwitches.A) {
+		showText("It's empty.");
+		exitEventProcessing();
 	}
-}
+	playSe("Chest1");
+	changeItems(items.Potion, +2);
+	showText("You found \c[3]2 Potions\c[0]!");
+	event.selfSwitches.A = true;
+});
+
+defineCommonEvent({ id: 20, name: "Rain", trigger: "parallel", switch: switches.Raining }, () => {
+	setWeatherEffect("rain", 5, 60);
+	wait(600);
+});
 ```
 
-The MV name "Rest at inn" isn't an identifier, so the function has a fallback name and the
-decorator carries the name.
+- Each event that calls "Open chest" is its `event`, so each chest keeps its own self switch A.
+- "Rain" runs by itself, so it has no running event and takes no parameter.
 
-### 10.2 A map event with two pages
+### 10.2 A map's events
 
-A locked gate. Page 1 runs when the player presses the action button at the gate. Once opened,
-self switch A is ON, so page 2 (the higher page whose conditions hold) takes over, and walking
-into the gate leads to the next map.
+Map 3, a forest: an old man, a guard, a locked gate and a cave.
 
 ```ts
-@event({ id: 4, x: 12, y: 8 })
-class Old_gate {
-	@page({ trigger: "action" })
-	page1() {
-		if (party.has(items.Rusty_key)) {
-			// <sound: creak>
-			playSe("Open1");
-			showText(
-				"The key turns with a scrape.",
-				"\c[2]The gate is open.\c[0]",
-			);
-			changeItems(items.Rusty_key, -1);
-			selfSwitches.A = true;
-		} else {
-			showBalloonIcon(player, "question", { wait: true });
+/// <reference types="rpgmv-event-tools" />
+
+defineMapEvent({ id: 1, name: "Old man", x: 5, y: 9 }, [
+	page({ trigger: "action" }, (event) => {
+		showText(
+			{ face: "People1", faceIndex: 3 },
+			"Lost, are you?",
+			"\c[2]The gate\c[0] is just north of here.",
+		);
+		showChoices(
+			[
+				choice("Ask about the gate", () => {
+					if (party.has(items.Rusty_key)) {
+						showText("That key of yours looks like it'd fit.");
+					} else if (variables.Days_passed >= 3) {
+						showText("They say the key was lost in the cave.");
+					} else {
+						showText("No one's opened that gate in years.");
+					}
+				}),
+				choice("Leave", () => {
+					breakLoop();
+				}),
+			],
+			{ cancel: 1 },
+		);
+		event.selfSwitches.A = true;
+	}),
+	page({ trigger: "action", when: (event) => event.selfSwitches.A }, (event) => {
+		showBalloonIcon(event, "zzz", { wait: true });
+	}),
+]);
+
+defineMapEvent({ id: 2, name: "Guard", x: 12, y: 7 }, [
+	page({ trigger: "action" }, () => {
+		showText("\N[1]! You can't go past here.");
+	}),
+]);
+
+defineMapEvent({ id: 4, name: "Old gate", x: 12, y: 6 }, [
+	page({ trigger: "action" }, (event) => {
+		if (!party.has(items.Rusty_key)) {
 			showText("It's locked.");
+			exitEventProcessing();
 		}
-	}
-
-	@page({ trigger: "playerTouch", when: selfSwitches.A })
-	page2() {
-		setMovementRoute(player) {
-			moveUp();
-		}
+		// <sound: creak>
+		playSe("Open1");
+		setMovementRoute(map.events.Guard, { skippable: true })
+			.moveLeft()
+			.moveLeft({ indent: 0 })
+			.turnRight();
+		changeItems(items.Rusty_key, -1);
+		switches.Gate_open = true;
+		event.selfSwitches.A = true;
+	}),
+	page({ trigger: "playerTouch", when: (event) => event.selfSwitches.A }, () => {
 		plugin.Lighting("off");
-		transferPlayer(maps.Old_forest, 10, 20, { direction: "up" });
-	}
-}
+		transferPlayer(maps.Deep_forest, 10, 20, { direction: "up" });
+	}),
+]);
+
+defineMapEvent({ id: 5, name: "Cave mouth", x: 20, y: 14 }, [
+	page({ trigger: "action" }, () => {
+		battle(troops.Cave_bats, {
+			onWin: () => {
+				variables.Bats_defeated += 1;
+				commonEvents.Open_chest();
+			},
+			onEscape: () => {
+				showText("You flee back into the forest.");
+			},
+		});
+	}),
+]);
 ```
 
-- The event's MV name, `Old_gate`, is an identifier, so it is the class name and the decorator
-  has no `name`.
+- In the gate's first page, `event` is the gate, and `map.events.Guard` is another event on the
+  map.
+- "Leave" uses Break Loop with no enclosing loop, as games often do: it ends the event there.
 - `// <sound: creak>` is an MV comment that a plugin might read. It is saved as a `108` command.
-- `\c[2]` and `\c[0]` are text codes, written exactly as MV stores them.
-- The route block has no options, so it uses the defaults: not repeating, not skippable, and the
-  event waits for the route to finish.
+- `moveLeft({ indent: 0 })` keeps one of the step indents described in
+  [8.3](#83-movement-characters-screen-audio-and-pictures).
+- The battle has win and escape handlers and no `onLose`: it can be escaped, and losing is a game
+  over.
+- When the cave mouth calls "Open chest" after a win, the cave mouth is that common event's
+  `event`.
 
 ### 10.3 A troop
 
@@ -929,33 +1072,29 @@ At the start of the battle a message shows. When the leader (member 0) drops to 
 calls for help once, and another bat appears.
 
 ```ts
-@troop({ id: 7, name: "Cave bats" })
-class troop7 {
-	@page({ span: "battle", when: turn(0) })
-	page1() {
-		showText("Bats swarm out of the dark!");
-	}
+/// <reference types="rpgmv-event-tools" />
 
-	@page({ span: "battle", when: members[0].hpPercent <= 50 })
-	page2() {
-		showText("\c[2]The bat shrieks for help!\c[0]");
-		enemyAppear(members[2]);
+defineTroop({ id: 7, name: "Cave bats" }, [
+	page({ span: "battle", when: () => troop.turn(0) }, () => {
+		showText("Bats swarm out of the dark!");
+	}),
+	page({ span: "battle", when: () => troop.members[0].hpPercent <= 50 }, () => {
+		showText("\c[2]The lead bat shrieks for help!\c[0]");
+		enemyAppear(troop.members[2]);
 		switches.Bats_called_help = true;
-	}
-}
+	}),
+]);
 ```
 
 ## 11. Open questions
 
 - **Show Choices "branch" value** ([8.2](#82-messages-comments-scripts-and-plugin-commands)):
-  which number the MV editor stores for a When Cancel branch, so `"branch"` can stand for it and
-  other values print as numbers. The engine (`Game_Interpreter.setupChoices`) turns any value at
-  or beyond the number of choices into "branch", so until this is settled the printer keeps such
-  values as numbers.
-- **Move route step indents** ([8.3](#83-movement-characters-screen-audio-and-pictures)): how to
-  keep the 3,369 steps that store `indent: 0`. It has to be per step, since routes mix `0` and
-  `null`.
+  which number the MV editor stores for a When Cancel branch. The engine
+  (`Game_Interpreter.setupChoices`) turns any value at or beyond the number of choices into
+  "branch", so until this is checked in the editor, such values print as numbers.
 - **Page settings.** The script doesn't show a page's graphic or movement settings. A later
-  version could print them as more `@page` options if editing them in the script is wanted.
-- **Document context.** A map event's script doesn't name its map; the document does (#4). A
-  `@map({ id })` header could make a standalone script self-describing.
+  version could add them as more `page` options if editing them in the script is wanted; the
+  route builder would serve a page's autonomous route (`moveRoute: route().moveAtRandom()`).
+- **Document context.** A map event's script doesn't name its map; the document does (#4). A map
+  option or a `defineMap` wrapper could make a standalone document self-describing, depending on
+  how #4 splits documents.
