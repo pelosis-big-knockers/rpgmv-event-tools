@@ -771,7 +771,7 @@ showChoices(
 		}),
 	],
 	{
-		cancel: 2,
+		cancel: "branch",
 		position: "middle",
 		onCancel: () => {
 			…
@@ -783,11 +783,12 @@ showChoices(
 - The texts are not repeated anywhere else (the `402` copies are derived).
 - It is an array rather than an object keyed by text (`{ Buy: () => … }`) because texts can
   repeat, and JavaScript would put number-like keys such as `"1"` first.
-- `cancel` says what the cancel button does: `"disallow"` (`-1`), a choice index from 0 (acts as
-  that choice), or a number at or beyond the number of choices, which the engine treats as "run
-  the When Cancel branch". It is always printed, because the MV editor's default (choice index 1)
-  is easy to misread. Which number the editor writes for "branch" is an
-  [open question](#11-open-questions), so such values print as numbers.
+- `cancel` says what the cancel button does: `"disallow"` (`-1`), `"branch"` (`-2`, run the
+  When Cancel branch), or a choice index from 0 (acts as that choice). It is always printed,
+  because the MV editor's default (choice index 1) is easy to misread.
+- The engine also treats any index at or beyond the number of choices as "branch". The editor
+  never writes one (it writes `-2`), but old data can hold one, for example after a choice was
+  deleted: the test game has a `cancel` of `2` with two choices. Such values print as numbers.
 - `onCancel` is the When Cancel branch (`403`), present exactly when the list has one.
 - Other options: `default` (the initially selected choice index, or `"none"`; default `0`),
   `position` (`"left"`, `"middle"`, `"right"`; default `"right"`), `background` (as for Show
@@ -933,6 +934,7 @@ The compiler regenerates all of this:
 | Block ends `412`, `404`, `413`, `604`          | They are the end of the `if`, choice array, loop body or battle handlers     |
 | Branch starts `411`, `402`, `403`, `601`–`603` | They are `else`, `choice(…)`, `onCancel`, `onWin`, `onEscape`, `onLose`      |
 | The choice index and text in `402`             | The index is the choice's position; the text is a copy from `102`            |
+| The parameters of `403`                        | The editor writes `[6, null]`, and the engine doesn't read them              |
 | `505` Movement Route Step lines                | Copies of the route's steps                                                  |
 | A move route's final `{ "code": 0 }`           | It ends every route                                                          |
 | Parameter counts of `111` and `122`            | Fixed by condition and operand type ([8.1](#81-flow-control-and-game-state)) |
@@ -1088,10 +1090,6 @@ defineTroop({ id: 7, name: "Cave bats" }, [
 
 ## 11. Open questions
 
-- **Show Choices "branch" value** ([8.2](#82-messages-comments-scripts-and-plugin-commands)):
-  which number the MV editor stores for a When Cancel branch. The engine
-  (`Game_Interpreter.setupChoices`) turns any value at or beyond the number of choices into
-  "branch", so until this is checked in the editor, such values print as numbers.
 - **Page settings.** The script doesn't show a page's graphic or movement settings. A later
   version could add them as more `page` options if editing them in the script is wanted; the
   route builder would serve a page's autonomous route (`moveRoute: route().moveAtRandom()`).
