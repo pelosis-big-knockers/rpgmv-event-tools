@@ -29,15 +29,24 @@ import {
 	identifier,
 	jsonLiteral,
 	member,
+	methodCall,
 	numberLiteral,
 	objectLiteral,
 	reference,
 	scriptString,
 	statement,
+	symbolReference,
 	type Expr,
 } from "./script-docs.js";
+import { EVENT, troopMember } from "./script-terms.js";
 import { ScriptSourceMap, type ContainerRef, type SegmentTarget } from "./source-map.js";
-import { buildStructure, type IndexRange, type StructureNode } from "./structure.js";
+import {
+	buildStructure,
+	type BlockNode,
+	type CommandNode,
+	type IndexRange,
+	type StructureNode,
+} from "./structure.js";
 import type { MvSymbols } from "./symbols.js";
 
 export interface DecompileContext {
@@ -279,9 +288,7 @@ class ScriptPrinter {
 			const letter = conditions.selfSwitchCh;
 			usesEvent = true;
 			checks.push(
-				SELF_SWITCHES.includes(letter)
-					? member(member(identifier("event"), "selfSwitches"), letter)
-					: undefined,
+				SELF_SWITCHES.includes(letter) ? member(member(EVENT, "selfSwitches"), letter) : undefined,
 			);
 		}
 		if (conditions.itemValid) {
@@ -307,8 +314,9 @@ class ScriptPrinter {
 			const { turnA, turnB } = conditions;
 			checks.push(
 				isIndex(turnA) && isIndex(turnB)
-					? call(
-							"troop.turn",
+					? methodCall(
+							identifier("troop"),
+							"turn",
 							turnB === 0 ? [numberLiteral(turnA)] : [numberLiteral(turnA), numberLiteral(turnB)],
 						)
 					: undefined,
@@ -318,11 +326,7 @@ class ScriptPrinter {
 			const { enemyIndex, enemyHp } = conditions;
 			checks.push(
 				isIndex(enemyIndex) && isFiniteNumber(enemyHp)
-					? binary(
-							reference(`troop.members[${enemyIndex}].hpPercent`),
-							"<=",
-							numberLiteral(enemyHp),
-						)
+					? binary(member(troopMember(enemyIndex), "hpPercent"), "<=", numberLiteral(enemyHp))
 					: undefined,
 			);
 		}
@@ -342,11 +346,11 @@ class ScriptPrinter {
 
 	#partyHas(kind: "item" | "actor", id: unknown): Expr | undefined {
 		const target = this.#referenceOrUndefined(kind, id);
-		return target && call("party.has", [target]);
+		return target && methodCall(identifier("party"), "has", [target]);
 	}
 
 	#reference(kind: NamedKind, id: number): Expr {
-		return reference(this.#symbols.format(kind, id));
+		return symbolReference(this.#symbols.reference(kind, id));
 	}
 
 	/** A reference to entry `id`, or `undefined` if `id` isn't a valid id. */
@@ -396,15 +400,14 @@ class ScriptPrinter {
 		nodes: readonly StructureNode[],
 		depth: number,
 		state: { usesEvent: boolean },
+		inLoop = false,
 	): Doc[] {
 		const statements: Doc[] = [];
 		for (const node of nodes) {
-			if (node.kind === "command" || node.kind === "block") {
-				const rendered = this.#render(location, list, node, depth, state);
-				if (rendered !== undefined) {
-					statements.push(rendered);
-					continue;
-				}
+			const rendered = this.#render(location, list, node, depth, state, inLoop);
+			if (rendered !== undefined) {
+				statements.push(rendered);
+				continue;
 			}
 			for (let index = node.start; index < node.end; index++) {
 				statements.push(this.#raw(location, list[index] as EventCommand, index, depth));
@@ -420,12 +423,16 @@ class ScriptPrinter {
 	#render(
 		location: ListLocation,
 		list: readonly EventCommand[],
-		node: StructureNode & { kind: "command" | "block" },
+		node: StructureNode,
 		depth: number,
 		state: { usesEvent: boolean },
+		inLoop: boolean,
 	): Doc | undefined {
+		if (node.kind !== "command" && node.kind !== "block") {
+			return undefined;
+		}
 		const renderer = this.#renderers.get(node.code);
-		if (!renderer) {
+		if (!renderer || !hasPlainStructure(list, node)) {
 			return undefined;
 		}
 		const saved = {
@@ -437,7 +444,10 @@ class ScriptPrinter {
 			list,
 			symbols: this.#symbols,
 			depth,
-			body: (nodes) => this.#statements(location, list, nodes, depth + 1, state),
+			inLoop,
+			body: (nodes, options) =>
+				this.#statements(location, list, nodes, depth + 1, state, inLoop || options?.loop === true),
+			nested: (nested) => this.#render(location, list, nested, depth + 1, state, inLoop),
 			segment: (start, end, doc) => this.#segment({ kind: "commands", location, start, end }, doc),
 			useEvent: () => {
 				state.usesEvent = true;
@@ -482,15 +492,7 @@ class ScriptPrinter {
  * `command({ … })` so it is kept exactly.
  */
 function rawCommand(command: EventCommand, depth: number): Expr {
-	const keys = Object.keys(command);
-	const canonical =
-		keys.length === 3 &&
-		keys[0] === "code" &&
-		keys[1] === "indent" &&
-		keys[2] === "parameters" &&
-		typeof command.code === "number" &&
-		Array.isArray(command.parameters);
-	if (!canonical) {
+	if (!isPlainCommand(command)) {
 		return call("command", [jsonLiteral(command)]);
 	}
 	const args = [numberLiteral(command.code), jsonLiteral(command.parameters)];
@@ -498,6 +500,47 @@ function rawCommand(command: EventCommand, depth: number): Expr {
 		args.push(objectLiteral([["indent", jsonLiteral(command.indent)]]));
 	}
 	return call("command", args);
+}
+
+/** A command with exactly the keys `code`, `indent` and `parameters`, in that order. */
+function isPlainCommand(command: EventCommand | undefined): boolean {
+	if (!command) {
+		return false;
+	}
+	const keys = Object.keys(command);
+	return (
+		keys.length === 3 &&
+		keys[0] === "code" &&
+		keys[1] === "indent" &&
+		keys[2] === "parameters" &&
+		typeof command.code === "number" &&
+		Array.isArray(command.parameters)
+	);
+}
+
+/**
+ * Whether a node's own commands are plain, and its terminators and closer have no parameters,
+ * which a renderer needs because the script leaves those commands out. Its bodies are printed
+ * separately.
+ */
+function hasPlainStructure(list: readonly EventCommand[], node: CommandNode | BlockNode): boolean {
+	if (node.kind === "command") {
+		for (let index = node.start; index < node.end; index++) {
+			if (!isPlainCommand(list[index])) {
+				return false;
+			}
+		}
+		return true;
+	}
+	const isEmpty = (index: number) =>
+		isPlainCommand(list[index]) && (list[index] as EventCommand).parameters.length === 0;
+	return (
+		isPlainCommand(list[node.start]) &&
+		node.branches.every(
+			(branch) => isPlainCommand(list[branch.headerIndex]) && isEmpty(branch.terminatorIndex),
+		) &&
+		isEmpty(node.closeIndex)
+	);
 }
 
 /** Adds `end: false` for a list without the usual final `0`, so it isn't added on compile. */
