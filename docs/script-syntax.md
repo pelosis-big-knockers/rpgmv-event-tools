@@ -628,16 +628,22 @@ of text:
 showText("…");
 ```
 
-- The printer writes `// ` followed by the text. The parser takes everything after `//`, minus
-  one leading space if there is one. So `//` alone is an empty line, and `//  x` keeps one space.
+- The printer writes `// ` followed by the text, and `//` alone for an empty line. The parser
+  takes everything after `//`, minus one leading space if there is one. So `//` alone is an empty
+  line, and `//  x` keeps one space.
 - Consecutive `//` lines form one Comment command. A blank line between two runs of `//` lines
-  starts a new Comment command.
+  starts a new Comment command. The printer puts a blank line between any two adjacent Comment
+  commands, whichever form they print in.
 - Comments are commands, so they only appear on their own lines inside a body. A comment after a
   statement on the same line is an error. A comment outside any body (between containers, or
   between pages) is not saved, and the compiler warns about it.
-- When `//` lines wouldn't round-trip (a line ends with whitespace that an editor might trim; the
-  test game has 7), the printer writes `comment("line 1", "line 2");` instead. The parser accepts
+- When `//` lines wouldn't round-trip, the printer writes `comment("line 1", "line 2");` instead:
+  when a line ends with whitespace, which Prettier and editors trim (the test game has 7 such
+  lines, in 2 comments), or contains a line terminator (U+2028 or U+2029). The parser accepts
   that form anywhere.
+- Prettier drops blank lines between comments that are all a body holds (no statement to attach
+  them to). So when a body holds only Comment commands, two or more, all printed as `//` lines,
+  the last one prints as `comment(…)`. The test game has none.
 
 **Rationale.** A comment statement (`comment("…")`) is exact, but most MV comments are real
 comments by the game's author, and `//` is where a reader looks for them. Making `//` the MV
@@ -753,7 +759,7 @@ type in the test game):
 
 ### 8.2 Messages, comments, scripts and plugin commands
 
-**Outline** (#42 finalizes).
+Finalized in #42.
 
 | Code(s)               | Command             | Script                                                             |
 | --------------------- | ------------------- | ------------------------------------------------------------------ |
@@ -762,12 +768,13 @@ type in the test game):
 | 103                   | Input Number        | `inputNumber(variables.Code, 4);` (variable, digits)               |
 | 104                   | Select Item         | `selectItem(variables.Chosen, "keyItem");`                         |
 | 105 + 405             | Show Scrolling Text | `showScrollingText({ speed: 3, noFastForward: true }, "line", …);` |
-| 108 + 408             | Comment             | `//` lines ([7.6](#76-comments))                                   |
+| 108 + 408             | Comment             | `//` lines, or `comment("line", …);` ([7.6](#76-comments))         |
 | 355 + 655             | Script              | `script("line", …);`                                               |
 | 356                   | Plugin Command      | `plugin.Head(arg, …);` or `plugin("…");` (see below)               |
 
-**Show Text.** Each text line (`401`) is one string argument, after the options. One line prints
-on one line; two or more print one per line:
+**Show Text.** Each text line (`401`) is one string argument, after the options. A Show Text
+without lines is `showText()` (or just its options). Line breaks follow the usual layout: the call
+stays on one line when it fits, and otherwise puts each argument on its own line:
 
 ```ts
 showText("Just one line.");
@@ -778,8 +785,10 @@ showText(
 );
 ```
 
-Options and their defaults (the MV editor's): `face: ""`, `faceIndex: 0`, `background:
-"window"` (`"dim"`, `"transparent"`), `position: "bottom"` (`"top"`, `"middle"`).
+Options, in this order, and their defaults (the MV editor's): `face: ""`, `faceIndex: 0`,
+`background: "window"` (`"dim"`, `"transparent"`), `position: "bottom"` (`"top"`, `"middle"`).
+Each is left out at its default, independently: a face index without a face prints as
+`{ faceIndex: 3 }` (85 in the test game).
 
 **Show Choices.** An array of `choice(text, body)`, one per choice in order, then the options:
 
@@ -803,22 +812,36 @@ showChoices(
 );
 ```
 
-- The texts are not repeated anywhere else (the `402` copies are derived).
+- The texts are not repeated anywhere else: each `402` is `[index, text]`, the choice's position
+  and a copy of its text, and the compiler writes one per choice.
 - It is an array rather than an object keyed by text (`{ Buy: () => … }`) because texts can
   repeat, and JavaScript would put number-like keys such as `"1"` first.
+- A choice body is an ordinary body: Break Loop in it prints as `loop.break()` inside a loop and
+  `breakLoop()` outside one ([7.3](#73-loops-and-jumps)).
+- Options print in the order `cancel`, `default`, `position`, `background`, `onCancel`.
 - `cancel` says what the cancel button does: `"disallow"` (`-1`), `"branch"` (`-2`, run the
   When Cancel branch), or a choice index from 0 (acts as that choice). It is always printed,
   because the MV editor's default (choice index 1) is easy to misread.
 - The engine also treats any index at or beyond the number of choices as "branch". The editor
   never writes one (it writes `-2`), but old data can hold one, for example after a choice was
   deleted: the test game has a `cancel` of `2` with two choices. Such values print as numbers.
-- `onCancel` is the When Cancel branch (`403`), present exactly when the list has one.
-- Other options: `default` (the initially selected choice index, or `"none"`; default `0`),
-  `position` (`"left"`, `"middle"`, `"right"`; default `"right"`), `background` (as for Show
-  Text; default `"window"`).
+- `onCancel` is the When Cancel branch (`403`), present exactly when the list has one, whatever
+  `cancel` says. The `403`'s parameters are always `[6, null]`, which the editor writes and the
+  engine doesn't read, so the script leaves them out.
+- Other options: `default` (the initially selected choice index, or `"none"` for `-1`; default
+  `0`), `position` (`"left"`, `"middle"`, `"right"`; default `"right"`), `background` (as for
+  Show Text; default `"window"`).
 
-**Script.** Each line of JavaScript is one string, laid out like Show Text. Editor support for
-the embedded JavaScript is #7.
+**Input Number** takes the variable that receives the number and the number of digits, both
+always printed. **Select Item** takes the variable that receives the item's id and the item type:
+`"regularItem"`, `"keyItem"`, `"hiddenItemA"` or `"hiddenItemB"` (`1` to `4`), always printed.
+
+**Show Scrolling Text** takes its options and lines like Show Text. `speed` is always printed;
+`noFastForward: true` is printed when set (default `false`). The editor's default speed isn't
+certain from the data (the test game's one scrolling text uses speed 1), so it is never left out.
+
+**Script.** Each line of JavaScript (the `355`, then each `655`) is one string, laid out like
+Show Text. Editor support for the embedded JavaScript is #7.
 
 **Plugin commands.** MV stores a plugin command as one line, `Head arg1 arg2`. The script splits
 it at single spaces:
@@ -838,9 +861,27 @@ it at single spaces:
 | `QuestLog add 007` | `plugin.QuestLog("add", "007");` | `007` isn't canonical (`7` would be) |
 | `Weather  rain`    | `plugin("Weather  rain");`       | Two spaces give an empty argument    |
 | `Layer.set(1);`    | `plugin("Layer.set(1);");`       | The head isn't an identifier         |
+| `Shake -0 1e+21`   | `plugin.Shake("-0", 1e21);`      | `-0` isn't canonical; `1e+21` is     |
 
 In the test game, 48,014 of 48,016 plugin commands split cleanly. Per-plugin syntax and docs are
-#7.
+#7. (`1e21` is how Prettier writes the number `1e+21`; it is the same number, and the compiler
+writes `String(n)` back.)
+
+**Details.**
+
+- **Exact shapes only.** A command prints with this syntax only when its parameters have exactly
+  the count and types above: Show Text 4 (a string, an index, and known enum values), Show
+  Choices 5 (an array of texts, integers from `-2` and `-1` for `cancel` and `default`, known
+  enum values), Input Number and Select Item 2, Show Scrolling Text 2 (an integer and a boolean),
+  and one text for each line of text, comment, script or plugin command. Texts can't contain line
+  breaks ([4.4](#44-string-literals)). Anything else, including unknown enum values, uses the raw
+  fallback.
+- **Choices.** A choice block prints only when its `402`s come first, one per choice in order,
+  each exactly `[index, text]` with the `102`'s text, followed by at most one `403` with
+  `[6, null]`. Other blocks use the raw fallback.
+- In the test game, every one of these commands that the printer reaches prints with this
+  syntax; the only ones still raw are inside Battle Processing branches, which print raw until
+  #44.
 
 ### 8.3 Movement, characters, screen, audio and pictures
 

@@ -403,14 +403,22 @@ class ScriptPrinter {
 		inLoop = false,
 	): Doc[] {
 		const statements: Doc[] = [];
+		let previous: StructureNode | undefined;
 		for (const node of nodes) {
+			// A blank line separates two comments, so they compile back as two (spec 7.6).
+			const blank = isComment(previous) && isComment(node);
+			previous = node;
+			const first = statements.length;
 			const rendered = this.#render(location, list, node, depth, state, inLoop);
 			if (rendered !== undefined) {
 				statements.push(rendered);
-				continue;
+			} else {
+				for (let index = node.start; index < node.end; index++) {
+					statements.push(this.#raw(location, list[index] as EventCommand, index, depth));
+				}
 			}
-			for (let index = node.start; index < node.end; index++) {
-				statements.push(this.#raw(location, list[index] as EventCommand, index, depth));
+			if (blank) {
+				statements[first] = [hardline, statements[first] as Doc];
 			}
 		}
 		return statements;
@@ -541,6 +549,11 @@ function hasPlainStructure(list: readonly EventCommand[], node: CommandNode | Bl
 		) &&
 		isEmpty(node.closeIndex)
 	);
+}
+
+/** Whether a node is a Comment command (`108` and its `408` lines). */
+function isComment(node: StructureNode | undefined): boolean {
+	return node?.kind === "command" && node.code === 108;
 }
 
 /** Adds `end: false` for a list without the usual final `0`, so it isn't added on compile. */
