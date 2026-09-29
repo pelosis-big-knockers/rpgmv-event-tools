@@ -114,3 +114,15 @@ export {
 	type SymbolReference,
 	type SymbolResolution,
 } from "./symbols.js";
+export {
+	TEXT_CODES,
+	describeTextCode,
+	getTextCodeInfo,
+	joinTextTokens,
+	tokenizeText,
+	type PlainTextToken,
+	type TextCodeInfo,
+	type TextCodeKind,
+	type TextCodeToken,
+	type TextToken,
+} from "./text-codes.js";

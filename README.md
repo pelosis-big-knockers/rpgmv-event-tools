@@ -13,16 +13,19 @@ Components:
 - **VS Code extension** (`packages/vscode`): event explorer tree, decompiled script views, hover
   and go-to-definition, find-all-references, and editing with round-trip save.
 
-Example of the planned decompiled output:
+Example of the planned decompiled output (the syntax is specified in
+[docs/script-syntax.md](docs/script-syntax.md)):
 
-```
-=== CommonEvent 1: "Toggle lantern" ===
-if S[2:"Lantern lit"] == ON:
-    S[2:"Lantern lit"] = OFF
-    say "You put out the lantern."
-else:
-    S[2:"Lantern lit"] = ON
-    say "You light the lantern."
+```ts
+defineCommonEvent({ id: 1, name: "Toggle lantern", trigger: "none" }, () => {
+	if (switches["Lantern lit"]) {
+		switches["Lantern lit"] = false;
+		showText("You put out the lantern.");
+	} else {
+		switches["Lantern lit"] = true;
+		showText("You light the lantern.");
+	}
+});
 ```
 
 ## Status
