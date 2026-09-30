@@ -1,3 +1,4 @@
+import { BATTLE_RENDERERS } from "./battle-renderers.js";
 import type { EventCommand } from "./commands.js";
 import { FLOW_RENDERERS } from "./flow-renderers.js";
 import type { Doc } from "./layout.js";
@@ -63,4 +64,5 @@ export const RENDERERS: ReadonlyMap<number, CommandRenderer> = new Map<number, C
 	...FLOW_RENDERERS,
 	...MESSAGE_RENDERERS,
 	...MOVEMENT_RENDERERS,
+	...BATTLE_RENDERERS,
 ]);

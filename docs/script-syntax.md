@@ -992,7 +992,7 @@ setMovementRoute(player, { skippable: true })
 
 ### 8.4 Battle and remaining commands
 
-**Outline** (#44 finalizes).
+Finalized in #44.
 
 **Battle Processing** (`301`) is a plain call when it has no result branches, and takes its
 branches as handlers otherwise:
@@ -1015,31 +1015,106 @@ battle(troops[variables.Next_troop], {
 
 - The troop is `troops.X`, `troops[variables.V]`, or `"randomEncounter"` (the map's encounter
   list).
-- The handlers are `onWin` (`601`), `onEscape` (`602`) and `onLose` (`603`). MV writes the win
-  branch whenever there are branches, so `onWin` is then always printed, even empty.
+- The handlers are `onWin` (`601`), `onEscape` (`602`) and `onLose` (`603`), in that order. MV
+  writes the win branch whenever there are branches, so `onWin` is then always printed, even
+  empty.
 - The flags Can Escape and Can Lose are not printed: they are true exactly when `onEscape` and
-  `onLose` are present. In the test game, 288 battles have no branches, 1,180 have win and
-  escape, and 316 have all three.
+  `onLose` are present. Handlers mean the battle has branches: `battle(t, { onWin: () => {} })`
+  is a battle with only a win branch, and `battle(t)` one with none. In the test game, 288
+  battles have no branches, 1,180 have win and escape, and 316 have all three.
 
-**Actors and enemies.** Actor commands take `actors.X`, `actors[variables.V]` or `party` (the
-whole party). Enemy commands take `troop.members[i]` (a troop member, from 0) or `troop` (the
-whole troop). An amount with an operation prints signed: `+10` increases, `-variables.Damage`
-decreases.
+**Shop Processing** (`302` + `605`) is a builder ([7.5](#75-builders-routes-and-shop-goods)):
 
-| Code(s)           | Command                     | Script                                                                                                                                                            |
-| ----------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 302 + 605         | Shop Processing             | `shop({ purchaseOnly: true }).goods(items.Potion).goods(weapons.Club, { price: 50 });`                                                                            |
-| 125               | Change Gold                 | `changeGold(+100);`                                                                                                                                               |
-| 126–128           | Change Items/Weapons/Armors | `changeItems(items.Potion, +1);`, `changeWeapons(weapons.Club, -1, { includeEquipment: true });`                                                                  |
-| 129               | Change Party Member         | `changePartyMember(actors.Mira, "add", { initialize: true });`                                                                                                    |
-| 311–326           | Actor commands              | `changeHp(party, -10, { allowKnockout: false });`, `changeState(actors.Mira, "add", states.Poison);`, `recoverAll(party);`, `changeName(actors.Mira, "Mira");`, … |
-| 331–340, 342      | Enemy commands              | `changeEnemyHp(troop.members[0], -50);`, `enemyAppear(troop.members[2]);`, `forceAction(troop.members[0], skills.Bite, "random");`, `abortBattle();`, …           |
-| 132–140, 322, 323 | System settings             | `changeBattleBgm("Battle2");`, `changeSaveAccess(false);`, `changeWindowColor([0, 0, 64, 0]);`, …                                                                 |
-| 281–285           | Map commands                | `changeMapNameDisplay(true);`, `changeTileset(tilesets.Dungeon);`, `getLocationInfo(variables.Tile, "regionId", 5, 6);`, …                                        |
-| 303, 351–354      | Scene control               | `nameInputProcessing(actors.Mira, 8);`, `openMenuScreen();`, `gameOver();`, …                                                                                     |
+```ts
+shop().goods(items.Potion);
+shop({ purchaseOnly: true })
+	.goods(items.Potion)
+	.goods(weapons.Club, { price: 50 })
+	.goods(armors.Cloak)
+	.goods(items.Ether);
+```
 
-The shop's first item is stored in `302` and the rest in `605` lines; the builder lists them all
-as `.goods(…)`. #44 also records any catalog code that deliberately keeps the raw fallback.
+- The first item is stored in `302` and each further one in a `605` line. The goods type
+  (item, weapon, armor) is the collection.
+- `{ price }` is a specified price; without it the item has its standard price.
+- `purchaseOnly` (default `false`) is stored in `302` only.
+- One `.goods` call prints on the call; two or more print on one line when they fit, otherwise
+  one per line, as Prettier prints member chains.
+
+**Actors and enemies.** Actor commands take `actors.X`, `actors[variables.V]` (the actor whose
+id is in the variable) or `party` (fixed actor 0, the whole party). Enemy commands take
+`troop.members[i]` (a troop member, from 0) or `troop` (-1, the whole troop). An amount with an
+operation prints signed: `+10` increases, `-variables.Damage` decreases.
+
+| Code(s)  | Command                                 | Script                                                                                                    |
+| -------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 125      | Change Gold                             | `changeGold(+100);`                                                                                       |
+| 126–128  | Change Items/Weapons/Armors             | `changeItems(items.Potion, +1);`, `changeWeapons(weapons.Club, -1, { includeEquipment: true });`          |
+| 129      | Change Party Member                     | `changePartyMember(actors.Mira, "add", { initialize: true });`, `"remove"`                                |
+| 311      | Change HP                               | `changeHp(party, -10, { allowKnockout: true });`                                                          |
+| 312, 326 | Change MP, TP                           | `changeMp(actors.Mira, +5);`, `changeTp(…)`                                                               |
+| 313      | Change State                            | `changeState(actors.Mira, "add", states.Poison);`, `"remove"`                                             |
+| 314      | Recover All                             | `recoverAll(party);`                                                                                      |
+| 315, 316 | Change EXP, Level                       | `changeExp(actors.Mira, +100, { showLevelUp: true });`, `changeLevel(…)`                                  |
+| 317      | Change Parameter                        | `changeParameter(actors.Mira, "luck", +2);` (`"maxHp"`, `"maxMp"`, `"attack"`, …, as in 8.1)              |
+| 318      | Change Skill                            | `changeSkill(actors.Mira, "learn", skills.Heal);`, `"forget"`                                             |
+| 319      | Change Equipment                        | `changeEquipment(actors.Mira, equipTypes.Weapon, weapons.Club);`, `null` to unequip                       |
+| 320      | Change Name                             | `changeName(actors.Mira, "Mira");`                                                                        |
+| 321      | Change Class                            | `changeClass(actors.Mira, classes.Knight, { keepExp: true });`                                            |
+| 324, 325 | Change Nickname, Profile                | `changeNickname(actors.Mira, "The Brave");`, `changeProfile(…)`                                           |
+| 331      | Change Enemy HP                         | `changeEnemyHp(troop.members[0], -50, { allowKnockout: true });`                                          |
+| 332, 342 | Change Enemy MP, TP                     | `changeEnemyMp(troop, +10);`, `changeEnemyTp(…)`                                                          |
+| 333      | Change Enemy State                      | `changeEnemyState(troop, "add", states.Poison);`                                                          |
+| 334, 335 | Enemy Recover All, Appear               | `enemyRecoverAll(troop);`, `enemyAppear(troop.members[2]);`                                               |
+| 336      | Enemy Transform                         | `enemyTransform(troop.members[0], enemies.Bat);`                                                          |
+| 337      | Show Battle Animation                   | `showBattleAnimation(troop.members[0], animations.Slash);`, `troop` for the entire troop                  |
+| 339      | Force Action                            | `forceAction(troop.members[0], skills.Bite, "random");`, `actors.Mira`; `"lastTarget"`, or a target index |
+| 340      | Abort Battle                            | `abortBattle();`                                                                                          |
+| 132, 133 | Change Battle BGM, Victory ME           | `changeBattleBgm("Battle2", { volume: 80 });`, `changeVictoryMe(…)`                                       |
+| 139, 140 | Change Defeat ME, Vehicle BGM           | `changeDefeatMe("Defeat1");`, `changeVehicleBgm("ship", "Ship1");`                                        |
+| 134–137  | Save, Menu, Encounter, Formation access | `changeSaveAccess(false);`, `changeMenuAccess(true);`, `changeEncounter(…)`, `changeFormationAccess(…)`   |
+| 138      | Change Window Color                     | `changeWindowColor([0, 0, 64, 0]);` (red, green, blue, unused)                                            |
+| 322      | Change Actor Images                     | `changeActorImages(actors.Mira, "Actor1", 0, "Actor1", 0, "Actor1_1");` (character, face, battler)        |
+| 323      | Change Vehicle Image                    | `changeVehicleImage("boat", "Vehicle", 0);`                                                               |
+| 281      | Change Map Name Display                 | `changeMapNameDisplay(true);`                                                                             |
+| 282      | Change Tileset                          | `changeTileset(tilesets.Dungeon);`                                                                        |
+| 283      | Change Battle Background                | `changeBattleBack("Grassland", "Forest");`                                                                |
+| 284      | Change Parallax                         | `changeParallax("Sky", { loopX: true, scrollX: 2 });`                                                     |
+| 285      | Get Location Info                       | `getLocationInfo(variables.Tile, "regionId", 5, 6);`, `variables.X, variables.Y` for the position         |
+| 303      | Name Input Processing                   | `nameInputProcessing(actors.Mira, 8);` (maximum characters)                                               |
+| 351–354  | Menu, Save, Game Over, Title            | `openMenuScreen();`, `openSaveScreen();`, `gameOver();`, `returnToTitleScreen();`                         |
+
+**Details.**
+
+- **Defaults left out.** Audio `volume: 90`, `pitch: 100`, `pan: 0` (as in 8.3). The boolean
+  options `includeEquipment`, `initialize`, `allowKnockout`, `showLevelUp`, `keepExp`,
+  `purchaseOnly`, `loopX` and `loopY` print only when `true`; `scrollX` and `scrollY` only when
+  not `0`.
+- **Access commands** (`134`–`137`) print `true` for enable (`1`), `false` for disable (`0`).
+  `changeMapNameDisplay` prints `true` for ON (`0`).
+- **Enum values**: `"add"`/`"remove"`, `"learn"`/`"forget"`, the parameter names of 8.1, vehicles
+  `"boat"`, `"ship"`, `"airship"`, and Get Location Info's `"terrainTag"`, `"eventId"`,
+  `"tileIdLayer1"`–`"tileIdLayer4"`, `"regionId"`.
+- **Amounts.** A constant amount must not be negative (the operation gives the sign), and a
+  constant `0` decreased prints `-0`. Other values use the raw fallback.
+- **Change Equipment** prints the item from `weapons` for equipment type 1 and from `armors`
+  otherwise; the compiler only reads the id.
+- **Show Battle Animation**: the editor writes index 0 when Entire Troop is checked, and the
+  engine then ignores the index. So `troop` stands for `[0, id, true]`; any other index with
+  Entire Troop, or index -1 without it, uses the raw fallback.
+- **Force Action** targets `"lastTarget"` (-2), `"random"` (-1) or a target index. Its subject is
+  `troop.members[i]` or `actors.X`. The engine also takes `troop` (-1) and `party` (actor 0),
+  which the editor doesn't offer; they print too.
+- **Random encounter** battles print only with the troop id `0`, which the editor is expected to
+  write; the test game has none. **Standard shop prices** print only with price `0` for the same
+  reason; the test game has no shops.
+- **Parameter counts** are exact per command (the catalog's), and texts must not contain line
+  breaks ([4.4](#44-string-literals); this mostly affects profiles). Anything else uses the raw fallback.
+- **Coverage.** Every catalog command code now has dedicated syntax in some group; no catalog
+  code deliberately keeps the raw fallback. The raw fallback is left for unknown codes (plugin
+  or newer-engine codes; the test game has none), malformed structure, and parameters a
+  renderer can't print exactly. In the test game, every command of this group prints with this
+  syntax.
 
 ## 9. Data the script leaves out
 
