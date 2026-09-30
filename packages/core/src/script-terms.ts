@@ -1,8 +1,11 @@
 /**
  * Script expressions for MV concepts that more than one command uses: the running event, other
- * characters and troop members (see `docs/script-syntax.md`, sections 5.4 and 5.5).
+ * characters and troop members (see `docs/script-syntax.md`, sections 5.4 and 5.5), audio and
+ * JavaScript values.
  */
+import { isExpressionBody } from "./javascript.js";
 import {
+	codeLambda,
 	computedMember,
 	identifier,
 	member,
@@ -135,4 +138,20 @@ export function nameOf(
 	value: unknown,
 ): string | undefined {
 	return typeof value === "number" ? names[value] : undefined;
+}
+
+/**
+ * The argument of a `script(…)` call for one piece of JavaScript that is a value (a script
+ * condition or operand, or the move-route step): `() => code` when it is one expression that
+ * reads back exactly, and otherwise the code as a string (spec 8.2). `undefined` if `code` isn't
+ * a string without line breaks, which neither form can hold.
+ */
+export function scriptArgument(code: unknown): Expr | undefined {
+	if (typeof code !== "string") {
+		return undefined;
+	}
+	if (isExpressionBody(code)) {
+		return codeLambda(code);
+	}
+	return /[\r\n]/.test(code) ? undefined : scriptString(code);
 }

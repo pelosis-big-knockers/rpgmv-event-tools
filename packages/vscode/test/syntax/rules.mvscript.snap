@@ -12,9 +12,9 @@
 #                                        ^ source.rpgmv-script comment.line.triple-slash.directive.ts meta.tag.ts
 #                                         ^^ source.rpgmv-script comment.line.triple-slash.directive.ts meta.tag.ts punctuation.definition.tag.directive.ts
 >
->// Hand-written cases for each rule of the grammar. Scripts are one line per string.
+>// Hand-written cases for each rule of the grammar.
 #^^ source.rpgmv-script comment.line.double-slash.ts punctuation.definition.comment.ts
-#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.rpgmv-script comment.line.double-slash.ts
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.rpgmv-script comment.line.double-slash.ts
 >
 >defineCommonEvent({ id: 1, name: "Raw strings", trigger: "none" }, () => {
 #^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.function-call.ts entity.name.function.ts
@@ -331,7 +331,7 @@
 # ^ source.rpgmv-script meta.brace.round.ts
 #  ^ source.rpgmv-script punctuation.terminator.statement.ts
 >
->defineCommonEvent({ id: 3, name: "Embedded JavaScript", trigger: "none" }, () => {
+>defineCommonEvent({ id: 3, name: "JavaScript lambdas", trigger: "none" }, () => {
 #^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.function-call.ts entity.name.function.ts
 #                 ^ source.rpgmv-script meta.brace.round.ts
 #                  ^ source.rpgmv-script meta.objectliteral.ts punctuation.definition.block.ts
@@ -346,236 +346,255 @@
 #                               ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts meta.object-literal.key.ts punctuation.separator.key-value.ts
 #                                ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts
 #                                 ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#                                  ^^^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.rpgmv-script
-#                                                     ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                                      ^ source.rpgmv-script meta.objectliteral.ts punctuation.separator.comma.ts
-#                                                       ^ source.rpgmv-script meta.objectliteral.ts
-#                                                        ^^^^^^^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts meta.object-literal.key.ts
-#                                                               ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts meta.object-literal.key.ts punctuation.separator.key-value.ts
-#                                                                ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts
-#                                                                 ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#                                                                  ^^^^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.rpgmv-script
-#                                                                      ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                                                       ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts
-#                                                                        ^ source.rpgmv-script meta.objectliteral.ts punctuation.definition.block.ts
-#                                                                         ^ source.rpgmv-script punctuation.separator.comma.ts
-#                                                                          ^ source.rpgmv-script meta.arrow.ts
-#                                                                           ^ source.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.begin.ts
-#                                                                            ^ source.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.end.ts
-#                                                                             ^ source.rpgmv-script meta.arrow.ts
-#                                                                              ^^ source.rpgmv-script meta.arrow.ts storage.type.function.arrow.ts
-#                                                                                ^ source.rpgmv-script meta.arrow.ts
-#                                                                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.definition.block.ts
->	script("$gameVariables.setValue(1, 'ok');", "if ($gameSwitches.value(2)) {", "}");
+#                                  ^^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.rpgmv-script
+#                                                    ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
+#                                                     ^ source.rpgmv-script meta.objectliteral.ts punctuation.separator.comma.ts
+#                                                      ^ source.rpgmv-script meta.objectliteral.ts
+#                                                       ^^^^^^^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts meta.object-literal.key.ts
+#                                                              ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts meta.object-literal.key.ts punctuation.separator.key-value.ts
+#                                                               ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts
+#                                                                ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
+#                                                                 ^^^^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.rpgmv-script
+#                                                                     ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
+#                                                                      ^ source.rpgmv-script meta.objectliteral.ts meta.object.member.ts
+#                                                                       ^ source.rpgmv-script meta.objectliteral.ts punctuation.definition.block.ts
+#                                                                        ^ source.rpgmv-script punctuation.separator.comma.ts
+#                                                                         ^ source.rpgmv-script meta.arrow.ts
+#                                                                          ^ source.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.begin.ts
+#                                                                           ^ source.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.end.ts
+#                                                                            ^ source.rpgmv-script meta.arrow.ts
+#                                                                             ^^ source.rpgmv-script meta.arrow.ts storage.type.function.arrow.ts
+#                                                                               ^ source.rpgmv-script meta.arrow.ts
+#                                                                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.definition.block.ts
+>	// A lambda's body is JavaScript: its strings have escapes and no text codes.
+#^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.whitespace.comment.leading.ts
+# ^^ source.rpgmv-script meta.arrow.ts meta.block.ts comment.line.double-slash.ts punctuation.definition.comment.ts
+#   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts comment.line.double-slash.ts
+>	script(() => {
 #^ source.rpgmv-script meta.arrow.ts meta.block.ts
-# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script entity.name.function.script.rpgmv-script
-#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#         ^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js variable.other.object.js
-#                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js punctuation.accessor.js
-#                        ^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js entity.name.function.js
-#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js constant.numeric.decimal.js
-#                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js punctuation.separator.comma.js
-#                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.single.js punctuation.definition.string.begin.js
-#                                     ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.single.js
-#                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.single.js punctuation.definition.string.end.js
-#                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js punctuation.terminator.statement.js
-#                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script punctuation.separator.comma.ts
-#                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script
-#                                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#                                              ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js keyword.control.conditional.js
-#                                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                                  ^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js variable.other.object.js
-#                                                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js punctuation.accessor.js
-#                                                                ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js entity.name.function.js
-#                                                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js constant.numeric.decimal.js
-#                                                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                                                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.block.js punctuation.definition.block.js
-#                                                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script punctuation.separator.comma.ts
-#                                                                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script
-#                                                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#                                                                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                                                                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                                                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#                                                                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
->	script('$gameMessage.add("She said \"hi\"");');
+# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts entity.name.function.ts
+#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.begin.ts
+#         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.end.ts
+#          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#           ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts storage.type.function.arrow.ts
+#             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts punctuation.definition.block.ts
+>		$gameVariables.setValue(1, 'ok');
+#^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts
+#  ^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts variable.other.object.ts
+#                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts punctuation.accessor.ts
+#                 ^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
+#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts constant.numeric.decimal.ts
+#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts punctuation.separator.comma.ts
+#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts
+#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.single.ts punctuation.definition.string.begin.ts
+#                              ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.single.ts
+#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.single.ts punctuation.definition.string.end.ts
+#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+>		$gameMessage.add("She said \"hi\" \C[2]");
+#^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts
+#  ^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts variable.other.object.ts
+#              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts punctuation.accessor.ts
+#               ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
+#                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.ts punctuation.definition.string.begin.ts
+#                    ^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.ts
+#                             ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.ts constant.character.escape.ts
+#                               ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.ts
+#                                 ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.ts constant.character.escape.ts
+#                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.ts
+#                                    ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.ts constant.character.escape.ts
+#                                      ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.ts
+#                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.ts punctuation.definition.string.end.ts
+#                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+>		var path = 'C:\\', slash = "\\";
+#^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts
+#  ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts storage.type.ts
+#     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts
+#      ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts meta.var-single-variable.expr.ts meta.definition.variable.ts variable.other.readwrite.ts
+#          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts meta.var-single-variable.expr.ts
+#           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts keyword.operator.assignment.ts
+#            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts
+#             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.quoted.single.ts punctuation.definition.string.begin.ts
+#              ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.quoted.single.ts
+#                ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.quoted.single.ts constant.character.escape.ts
+#                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.quoted.single.ts punctuation.definition.string.end.ts
+#                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts punctuation.separator.comma.ts
+#                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts
+#                     ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts meta.var-single-variable.expr.ts meta.definition.variable.ts variable.other.readwrite.ts
+#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts meta.var-single-variable.expr.ts
+#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts keyword.operator.assignment.ts
+#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts
+#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.quoted.double.ts punctuation.definition.string.begin.ts
+#                              ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.quoted.double.ts constant.character.escape.ts
+#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.quoted.double.ts punctuation.definition.string.end.ts
+#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+>
+>		var s = `template ${1 + 2}
+#^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts
+#  ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts storage.type.ts
+#     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts
+#      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts meta.var-single-variable.expr.ts meta.definition.variable.ts variable.other.readwrite.ts
+#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts meta.var-single-variable.expr.ts
+#        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts keyword.operator.assignment.ts
+#         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts
+#          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts punctuation.definition.string.template.begin.ts
+#           ^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts
+#                    ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts punctuation.definition.template-expression.begin.ts
+#                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts meta.embedded.line.ts constant.numeric.decimal.ts
+#                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts meta.embedded.line.ts
+#                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts meta.embedded.line.ts keyword.operator.arithmetic.ts
+#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts meta.embedded.line.ts
+#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts meta.embedded.line.ts constant.numeric.decimal.ts
+#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts punctuation.definition.template-expression.end.ts
+>		  still the template ${"}"})`; // a comment )
+#^^^^^^^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts
+#                       ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts punctuation.definition.template-expression.begin.ts
+#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts meta.embedded.line.ts string.quoted.double.ts punctuation.definition.string.begin.ts
+#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts meta.embedded.line.ts string.quoted.double.ts
+#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts meta.embedded.line.ts string.quoted.double.ts punctuation.definition.string.end.ts
+#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts meta.template.expression.ts punctuation.definition.template-expression.end.ts
+#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts
+#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.var.expr.ts string.template.ts punctuation.definition.string.template.end.ts
+#                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts
+#                                 ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts comment.line.double-slash.ts punctuation.definition.comment.ts
+#                                   ^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts comment.line.double-slash.ts
+>		if ($gameSwitches.value(2)) { f(a, [b, { c: ")" }]); }
+#^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts
+#  ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts keyword.control.conditional.ts
+#    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts
+#     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#      ^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts variable.other.object.ts
+#                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts punctuation.accessor.ts
+#                    ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
+#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts constant.numeric.decimal.ts
+#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts
+#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.definition.block.ts
+#                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts
+#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.ts entity.name.function.ts
+#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.brace.round.ts
+#                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts variable.other.readwrite.ts
+#                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.separator.comma.ts
+#                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts
+#                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.brace.square.ts
+#                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts variable.other.readwrite.ts
+#                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts punctuation.separator.comma.ts
+#                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts
+#                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.objectliteral.ts punctuation.definition.block.ts
+#                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.objectliteral.ts
+#                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.objectliteral.ts meta.object.member.ts meta.object-literal.key.ts
+#                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.objectliteral.ts meta.object.member.ts meta.object-literal.key.ts punctuation.separator.key-value.ts
+#                                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.objectliteral.ts meta.object.member.ts
+#                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.objectliteral.ts meta.object.member.ts string.quoted.double.ts punctuation.definition.string.begin.ts
+#                                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.objectliteral.ts meta.object.member.ts string.quoted.double.ts
+#                                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.objectliteral.ts meta.object.member.ts string.quoted.double.ts punctuation.definition.string.end.ts
+#                                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.objectliteral.ts meta.object.member.ts
+#                                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.objectliteral.ts punctuation.definition.block.ts
+#                                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.array.literal.ts meta.brace.square.ts
+#                                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.brace.round.ts
+#                                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.terminator.statement.ts
+#                                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts
+#                                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.definition.block.ts
+>	});
+#^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts
+# ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.block.ts punctuation.definition.block.ts
+#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#   ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+>	script(() => $gameMessage.add("It's " + 'late'));
 #^ source.rpgmv-script meta.arrow.ts meta.block.ts
-# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script entity.name.function.script.rpgmv-script
-#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.single.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#         ^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js variable.other.object.js
-#                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js punctuation.accessor.js
-#                      ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js entity.name.function.js
-#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js punctuation.definition.string.begin.js
-#                           ^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js
-#                                    ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js constant.character.escape.js
-#                                      ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js
-#                                        ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js constant.character.escape.js
-#                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js punctuation.definition.string.end.js
-#                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js punctuation.terminator.statement.js
-#                                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.single.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#                                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
->	script(`$gameMessage.add("It's " + 'late');`);
+# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts entity.name.function.ts
+#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.begin.ts
+#         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.end.ts
+#          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#           ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts storage.type.function.arrow.ts
+#             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#              ^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts variable.other.object.ts
+#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts punctuation.accessor.ts
+#                           ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts entity.name.function.ts
+#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.double.ts punctuation.definition.string.begin.ts
+#                                ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.double.ts
+#                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.double.ts punctuation.definition.string.end.ts
+#                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script keyword.operator.arithmetic.ts
+#                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.single.ts punctuation.definition.string.begin.ts
+#                                          ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.single.ts
+#                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.single.ts punctuation.definition.string.end.ts
+#                                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+>	script(() => ({ a: "\"" }));
 #^ source.rpgmv-script meta.arrow.ts meta.block.ts
-# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script entity.name.function.script.rpgmv-script
-#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.other.backtick.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#         ^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js variable.other.object.js
-#                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js punctuation.accessor.js
-#                      ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js entity.name.function.js
-#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js punctuation.definition.string.begin.js
-#                           ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js
-#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js punctuation.definition.string.end.js
-#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js keyword.operator.arithmetic.js
-#                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.single.js punctuation.definition.string.begin.js
-#                                     ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.single.js
-#                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.single.js punctuation.definition.string.end.js
-#                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js punctuation.terminator.statement.js
-#                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.other.backtick.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
->	script("var path = 'C:\\';", "var open = '", "var slash = 'end\");
-#^ source.rpgmv-script meta.arrow.ts meta.block.ts
-# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script entity.name.function.script.rpgmv-script
-#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#         ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js storage.type.js
-#            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js
-#             ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js meta.var-single-variable.expr.js meta.definition.variable.js variable.other.readwrite.js
-#                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js meta.var-single-variable.expr.js
-#                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js keyword.operator.assignment.js
-#                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js
-#                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.quoted.single.js punctuation.definition.string.begin.js
-#                     ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.quoted.single.js
-#                       ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.quoted.single.js constant.character.escape.js
-#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.quoted.single.js punctuation.definition.string.end.js
-#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js punctuation.terminator.statement.js
-#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script punctuation.separator.comma.ts
-#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script
-#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#                               ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js storage.type.js
-#                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js
-#                                   ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js meta.var-single-variable.expr.js meta.definition.variable.js variable.other.readwrite.js
-#                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js meta.var-single-variable.expr.js
-#                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js keyword.operator.assignment.js
-#                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js
-#                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.quoted.single.js punctuation.definition.string.begin.js
-#                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script punctuation.separator.comma.ts
-#                                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script
-#                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#                                               ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js storage.type.js
-#                                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js
-#                                                   ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js meta.var-single-variable.expr.js meta.definition.variable.js variable.other.readwrite.js
-#                                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js meta.var-single-variable.expr.js
-#                                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js keyword.operator.assignment.js
-#                                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js
-#                                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.quoted.single.js punctuation.definition.string.begin.js
-#                                                            ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.quoted.single.js
-#                                                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.quoted.single.js constant.character.escape.js
-#                                                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#                                                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
->	script("/* unclosed comment", "$gamePlayer.x;");
-#^ source.rpgmv-script meta.arrow.ts meta.block.ts
-# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script entity.name.function.script.rpgmv-script
-#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#         ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js comment.block.js punctuation.definition.comment.js
-#           ^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js comment.block.js
-#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script punctuation.separator.comma.ts
-#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script
-#                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#                                ^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js variable.other.object.js
-#                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js punctuation.accessor.js
-#                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js variable.other.property.js
-#                                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js punctuation.terminator.statement.js
-#                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#                                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
->	script(
-#^ source.rpgmv-script meta.arrow.ts meta.block.ts
-# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script entity.name.function.script.rpgmv-script
-#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
->		"const s = `template ${1 + 2}`;",
-#^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script
-#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#   ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js storage.type.js
-#        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js
-#         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js meta.var-single-variable.expr.js meta.definition.variable.js variable.other.constant.js
-#          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js meta.var-single-variable.expr.js
-#           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js keyword.operator.assignment.js
-#            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js
-#             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.template.js punctuation.definition.string.template.begin.js
-#              ^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.template.js
-#                       ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.template.js meta.template.expression.js punctuation.definition.template-expression.begin.js
-#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.template.js meta.template.expression.js meta.embedded.line.js constant.numeric.decimal.js
-#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.template.js meta.template.expression.js meta.embedded.line.js
-#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.template.js meta.template.expression.js meta.embedded.line.js keyword.operator.arithmetic.js
-#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.template.js meta.template.expression.js meta.embedded.line.js
-#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.template.js meta.template.expression.js meta.embedded.line.js constant.numeric.decimal.js
-#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.template.js meta.template.expression.js punctuation.definition.template-expression.end.js
-#                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.var.expr.js string.template.js punctuation.definition.string.template.end.js
-#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js punctuation.terminator.statement.js
-#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script punctuation.separator.comma.ts
->		"$gameParty.gainGold(100);",
-#^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script
-#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#   ^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js variable.other.object.js
-#             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js punctuation.accessor.js
-#              ^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js entity.name.function.js
-#                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                       ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js constant.numeric.decimal.js
-#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js punctuation.terminator.statement.js
-#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script punctuation.separator.comma.ts
->	);
-#^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script
-# ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
->	if (script("$gameParty.size() > 2")) {
+# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts entity.name.function.ts
+#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.begin.ts
+#         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.end.ts
+#          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#           ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts storage.type.function.arrow.ts
+#             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.objectliteral.ts punctuation.definition.block.ts
+#                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.objectliteral.ts
+#                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.objectliteral.ts meta.object.member.ts meta.object-literal.key.ts
+#                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.objectliteral.ts meta.object.member.ts meta.object-literal.key.ts punctuation.separator.key-value.ts
+#                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.objectliteral.ts meta.object.member.ts
+#                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.ts punctuation.definition.string.begin.ts
+#                     ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.ts constant.character.escape.ts
+#                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.objectliteral.ts meta.object.member.ts string.quoted.double.ts punctuation.definition.string.end.ts
+#                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.objectliteral.ts meta.object.member.ts
+#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.objectliteral.ts punctuation.definition.block.ts
+#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+>	if (script(() => $gameParty.size() > 2 && /[")]/.test(s))) {
 #^ source.rpgmv-script meta.arrow.ts meta.block.ts
 # ^^ source.rpgmv-script meta.arrow.ts meta.block.ts keyword.control.conditional.ts
 #   ^ source.rpgmv-script meta.arrow.ts meta.block.ts
 #    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
-#     ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script entity.name.function.script.rpgmv-script
-#           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#             ^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js variable.other.object.js
-#                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js punctuation.accessor.js
-#                        ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js entity.name.function.js
-#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js keyword.operator.relational.js
-#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js constant.numeric.decimal.js
-#                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
-#                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts
-#                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.definition.block.ts
->		variables.Day = script("Math.floor(Math.random() * 3)");
+#     ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts entity.name.function.ts
+#           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.begin.ts
+#             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.end.ts
+#              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#               ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts storage.type.function.arrow.ts
+#                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#                  ^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts variable.other.object.ts
+#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts punctuation.accessor.ts
+#                             ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts entity.name.function.ts
+#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script keyword.operator.relational.ts
+#                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script constant.numeric.decimal.ts
+#                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                                        ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script keyword.operator.logical.ts
+#                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.regexp.ts
+#                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.regexp.ts punctuation.definition.string.begin.ts
+#                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.regexp.ts constant.other.character-class.set.regexp punctuation.definition.character-class.regexp
+#                                             ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.regexp.ts constant.other.character-class.set.regexp
+#                                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.regexp.ts constant.other.character-class.set.regexp punctuation.definition.character-class.regexp
+#                                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.regexp.ts punctuation.definition.string.end.ts
+#                                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts punctuation.accessor.ts
+#                                                  ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts entity.name.function.ts
+#                                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script variable.other.readwrite.ts
+#                                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts
+#                                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.definition.block.ts
+>		variables.Day = script(() => Math.floor(Math.random() * 3));
 #^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts
 #  ^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts variable.other.object.ts
 #           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.accessor.ts
@@ -583,29 +602,67 @@
 #               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts
 #                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts keyword.operator.assignment.ts
 #                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts
-#                  ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script entity.name.function.script.rpgmv-script
-#                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#                          ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js variable.other.object.js
-#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js punctuation.accessor.js
-#                               ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js entity.name.function.js
-#                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                     ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js variable.other.object.js
-#                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js punctuation.accessor.js
-#                                          ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js entity.name.function.js
-#                                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js keyword.operator.arithmetic.js
-#                                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js constant.numeric.decimal.js
-#                                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#                                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.terminator.statement.ts
+#                  ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts entity.name.function.ts
+#                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.brace.round.ts
+#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.begin.ts
+#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.end.ts
+#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#                            ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts storage.type.function.arrow.ts
+#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#                               ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts variable.other.object.ts
+#                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts punctuation.accessor.ts
+#                                    ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts entity.name.function.ts
+#                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                          ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts variable.other.object.ts
+#                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts punctuation.accessor.ts
+#                                               ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts entity.name.function.ts
+#                                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script keyword.operator.arithmetic.ts
+#                                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script constant.numeric.decimal.ts
+#                                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts meta.brace.round.ts
+#                                                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.terminator.statement.ts
 >	}
 #^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts
 # ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.definition.block.ts
+>	script(
+#^ source.rpgmv-script meta.arrow.ts meta.block.ts
+# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts entity.name.function.ts
+#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+>		() =>
+#^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.begin.ts
+#   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.end.ts
+#    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#     ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts storage.type.function.arrow.ts
+>			$gameVariables.value(1111111111111111111111111111111111111111) + $gameVariables.value("\")"),
+#^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#   ^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts variable.other.object.ts
+#                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts punctuation.accessor.ts
+#                  ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts entity.name.function.ts
+#                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script constant.numeric.decimal.ts
+#                                                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                                                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script keyword.operator.arithmetic.ts
+#                                                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                                                                    ^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts variable.other.object.ts
+#                                                                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts punctuation.accessor.ts
+#                                                                                   ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts entity.name.function.ts
+#                                                                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                                                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.double.ts punctuation.definition.string.begin.ts
+#                                                                                          ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.double.ts constant.character.escape.ts
+#                                                                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.double.ts
+#                                                                                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.double.ts punctuation.definition.string.end.ts
+#                                                                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                                                                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.separator.comma.ts
+>	);
+#^ source.rpgmv-script meta.arrow.ts meta.block.ts
+# ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
 >	setMovementRoute(player, { skippable: true })
 #^ source.rpgmv-script meta.arrow.ts meta.block.ts
 # ^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
@@ -628,39 +685,46 @@
 #   ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
 #         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
 #          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
->		.script("this.setOpacity(128)")
-#^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script
-#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script punctuation.accessor.rpgmv-script
-#   ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script entity.name.function.script.rpgmv-script
-#         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#           ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js variable.language.this.js
-#               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js punctuation.accessor.js
-#                ^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js entity.name.function.js
-#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                           ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js constant.numeric.decimal.js
-#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
->		.script('this._opacity = "x"');
-#^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script
-#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script punctuation.accessor.rpgmv-script
-#   ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script entity.name.function.script.rpgmv-script
-#         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.single.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#           ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js variable.language.this.js
-#               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js punctuation.accessor.js
-#                ^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js variable.other.property.js
-#                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js keyword.operator.assignment.js
-#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js punctuation.definition.string.begin.js
-#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js
-#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js string.quoted.double.js punctuation.definition.string.end.js
-#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.single.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
->	setMovementRoute(event).moveUp().script("this.jump(0, 0)");
+>		.script(() => this.setOpacity(128))
+#^^ source.rpgmv-script meta.arrow.ts meta.block.ts
+#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.accessor.ts
+#   ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts entity.name.function.ts
+#         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.begin.ts
+#           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.end.ts
+#            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#             ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts storage.type.function.arrow.ts
+#               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#                ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts variable.language.this.ts
+#                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts punctuation.accessor.ts
+#                     ^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts entity.name.function.ts
+#                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                ^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script constant.numeric.decimal.ts
+#                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+>		.script(() => this._opacity = "x\"");
+#^^ source.rpgmv-script meta.arrow.ts meta.block.ts
+#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.accessor.ts
+#   ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts entity.name.function.ts
+#         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.begin.ts
+#           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.end.ts
+#            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#             ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts storage.type.function.arrow.ts
+#               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#                ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script variable.language.this.ts
+#                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script punctuation.accessor.ts
+#                     ^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script variable.other.property.ts
+#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script keyword.operator.assignment.ts
+#                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.double.ts punctuation.definition.string.begin.ts
+#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.double.ts
+#                                  ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.double.ts constant.character.escape.ts
+#                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script string.quoted.double.ts punctuation.definition.string.end.ts
+#                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+>	setMovementRoute(event).moveUp().script(() => this.jump(0, 0));
 #^ source.rpgmv-script meta.arrow.ts meta.block.ts
 # ^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
 #                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
@@ -670,22 +734,96 @@
 #                         ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
 #                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
 #                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
-#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script punctuation.accessor.rpgmv-script
-#                                  ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script entity.name.function.script.rpgmv-script
-#                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#                                          ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js variable.language.this.js
-#                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js punctuation.accessor.js
-#                                               ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.function-call.js entity.name.function.js
-#                                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js constant.numeric.decimal.js
-#                                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js punctuation.separator.comma.js
-#                                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js
-#                                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js constant.numeric.decimal.js
-#                                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script meta.embedded.line.js meta.brace.round.js
-#                                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.script-arguments.rpgmv-script string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.script.rpgmv-script meta.brace.round.rpgmv-script
-#                                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.accessor.ts
+#                                  ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts entity.name.function.ts
+#                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.begin.ts
+#                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts meta.parameters.ts punctuation.definition.parameters.end.ts
+#                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#                                            ^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts storage.type.function.arrow.ts
+#                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.arrow.ts
+#                                               ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts variable.language.this.ts
+#                                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts punctuation.accessor.ts
+#                                                    ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.function-call.ts entity.name.function.ts
+#                                                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script constant.numeric.decimal.ts
+#                                                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script punctuation.separator.comma.ts
+#                                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script
+#                                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script constant.numeric.decimal.ts
+#                                                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.script-lambda.rpgmv-script meta.brace.round.ts
+#                                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+>	// The string fallback, and calls that aren't lambdas, have raw strings.
+#^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.whitespace.comment.leading.ts
+# ^^ source.rpgmv-script meta.arrow.ts meta.block.ts comment.line.double-slash.ts punctuation.definition.comment.ts
+#   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts comment.line.double-slash.ts
+>	script("var path = 'C:\';", "if (");
+#^ source.rpgmv-script meta.arrow.ts meta.block.ts
+# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
+#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#        ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
+#         ^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script
+#                       ^^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script constant.character.escape.text-code.unknown.rpgmv-script
+#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script
+#                          ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
+#                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.separator.comma.ts
+#                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts
+#                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
+#                              ^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script
+#                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
+#                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+>	script(
+#^ source.rpgmv-script meta.arrow.ts meta.block.ts
+# ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts entity.name.function.ts
+#       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+>		"$gameVariables.value(1111111111111111111111111111111111111111) + $gameVariables.value(\C[2]\",
+#^^ source.rpgmv-script meta.arrow.ts meta.block.ts
+#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
+#   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script
+#                                                                                         ^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script constant.character.escape.text-code.rpgmv-script
+#                                                                                              ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script
+#                                                                                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
+#                                                                                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.separator.comma.ts
+>	);
+#^ source.rpgmv-script meta.arrow.ts meta.block.ts
+# ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#  ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+>	if (script("Input.isPressed('ok');")) {
+#^ source.rpgmv-script meta.arrow.ts meta.block.ts
+# ^^ source.rpgmv-script meta.arrow.ts meta.block.ts keyword.control.conditional.ts
+#   ^ source.rpgmv-script meta.arrow.ts meta.block.ts
+#    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#     ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
+#           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#            ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
+#             ^^^^^^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script
+#                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
+#                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts
+#                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.definition.block.ts
+>	}
+#^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts
+# ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.block.ts punctuation.definition.block.ts
+>	setMovementRoute(player).script("this.jump(0, 0);").moveUp();
+#^ source.rpgmv-script meta.arrow.ts meta.block.ts
+# ^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
+#                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                  ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts variable.other.readwrite.ts
+#                        ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts punctuation.accessor.ts
+#                          ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
+#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script
+#                                  ^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script
+#                                                  ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script
+#                                                   ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts punctuation.accessor.ts
+#                                                     ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
+#                                                           ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                                            ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                                             ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
 >	plugin.script("not", "JavaScript \C[2]");
 #^ source.rpgmv-script meta.arrow.ts meta.block.ts
 # ^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts variable.other.object.ts
@@ -711,15 +849,15 @@
 #                    ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
 #                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
 #                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
->	showText('script("not a call")');
+>	showText('script(() => "not a call")');
 #^ source.rpgmv-script meta.arrow.ts meta.block.ts
 # ^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.function-call.ts entity.name.function.ts
 #         ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
 #          ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.single.rpgmv-script punctuation.definition.string.begin.rpgmv-script
-#           ^^^^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.single.rpgmv-script
-#                               ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.single.rpgmv-script punctuation.definition.string.end.rpgmv-script
-#                                ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
-#                                 ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
+#           ^^^^^^^^^^^^^^^^^^^^^^^^^^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.single.rpgmv-script
+#                                     ^ source.rpgmv-script meta.arrow.ts meta.block.ts string.quoted.single.rpgmv-script punctuation.definition.string.end.rpgmv-script
+#                                      ^ source.rpgmv-script meta.arrow.ts meta.block.ts meta.brace.round.ts
+#                                       ^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.terminator.statement.ts
 >});
 #^ source.rpgmv-script meta.arrow.ts meta.block.ts punctuation.definition.block.ts
 # ^ source.rpgmv-script meta.brace.round.ts

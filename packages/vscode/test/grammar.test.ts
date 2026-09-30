@@ -30,7 +30,12 @@ const step = (code: number, parameters: unknown[]) => ({ code, parameters, inden
 
 /** Invented commands for each rule of the grammar, as one common event. */
 function grammarCases(): ScriptContainer {
-	const route = [step(45, ["this.setOpacity(128);"]), step(45, ['this._name = "Mira";'])];
+	const route = [
+		step(45, ["this.setOpacity(128)"]),
+		step(45, ['this._name = "Mira \\"the\\" guard"']),
+		step(45, ["this.jump(0, 0);"]),
+	];
+	const long = `$gameVariables.value(${"1".repeat(40)}) + $gameVariables.value(${"2".repeat(40)})`;
 	const list = [
 		cmd(101, 0, ["", 0, 0, 2]),
 		cmd(401, 0, ["\\C[2]Mira\\C[0]: The gate costs 50\\G. You have \\V[1]."]),
@@ -47,9 +52,25 @@ function grammarCases(): ScriptContainer {
 		cmd(355, 0, ["var name = $gameActors.actor(1).name();"]),
 		cmd(655, 0, ["$gameMessage.add('Hello, ' + name);"]),
 		cmd(655, 0, ['$gameVariables.setValue(2, name.length + "!".length);']),
-		cmd(655, 0, ["if (name.endsWith('\\\\')) { $gameMessage.add(\"It's a path\"); }"]),
+		cmd(655, 0, ['if (name.endsWith(\'\\\\\')) { $gameMessage.add("It\'s a \\"path\\""); }']),
+		cmd(655, 0, [""]),
+		cmd(655, 0, ["var text = `\\C[2]one"]),
+		cmd(655, 0, ["  two ${name})`; // (done"]),
+		cmd(355, 0, ["$gameSystem.disableSave()"]),
+		cmd(355, 0, [long]),
+		cmd(355, 0, ["$gameMessage.add('\\\\C[2]Not a text code');"]),
+		cmd(355, 0, ["if ("]),
 		cmd(111, 0, [12, "$gameParty.size() > 2"]),
 		cmd(122, 1, [2, 2, 0, 4, "Math.floor(Math.random() * 3)"]),
+		cmd(0, 1),
+		cmd(412, 0),
+		cmd(111, 0, [12, "Input.isPressed('ok');"]),
+		cmd(0, 1),
+		cmd(412, 0),
+		cmd(111, 0, [12, `${long} > 0`]),
+		cmd(0, 1),
+		cmd(412, 0),
+		cmd(111, 0, [12, `${long} > 0 && "\\C[2]";`]),
 		cmd(0, 1),
 		cmd(412, 0),
 		cmd(205, 0, [

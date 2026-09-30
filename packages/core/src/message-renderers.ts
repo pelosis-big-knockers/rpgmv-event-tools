@@ -8,13 +8,16 @@
  * the command as it is.
  */
 import type { EventCommand } from "./commands.js";
-import { hardline, join, type Doc } from "./layout.js";
+import { isBlockBody, isExpressionBody } from "./javascript.js";
+import { hardline, join, verbatim, type Doc } from "./layout.js";
 import type { CommandRenderer, RenderContext } from "./renderers.js";
 import {
 	arrayLiteral,
 	arrowBlock,
 	booleanLiteral,
 	call,
+	codeBlockLambda,
+	codeLambda,
 	identifier,
 	methodCall,
 	numberLiteral,
@@ -356,10 +359,31 @@ function isPlainComment(list: readonly EventCommand[], start: number, end: numbe
 	return isSlashable(lines);
 }
 
-/** 355 + 655: `script("line", …);`. */
+/**
+ * 355 + 655: the code as a lambda (spec 8.2). One line holding one expression is
+ * `script(() => code);`; other code that parses is a block body, one stored line per line, each
+ * line with its own source-map segment. Code that can't print as a lambda is
+ * `script("line", …);`.
+ */
 const script: CommandRenderer = (node, context) => {
 	const lines = lineTexts(node, context);
-	return node.kind === "command" && lines ? linesCall("script", [], lines) : undefined;
+	if (node.kind !== "command" || !lines) {
+		return undefined;
+	}
+	const [first] = lines;
+	if (lines.length === 1 && first !== undefined && isExpressionBody(first)) {
+		return statement(call("script", [codeLambda(first)]));
+	}
+	if (isBlockBody(lines)) {
+		// A single line is the whole command, whose segment (the whole call) already covers it.
+		const docs = lines.map((text, index) =>
+			lines.length === 1
+				? verbatim(text)
+				: context.segment(node.start + index, node.start + index + 1, verbatim(text)),
+		);
+		return statement(call("script", [codeBlockLambda(docs)]));
+	}
+	return linesCall("script", [], lines);
 };
 
 /**

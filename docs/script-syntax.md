@@ -118,12 +118,15 @@ Short background for readers new to RPG Maker MV. The terms here are used throug
 - Source is Unicode text. The printer writes `\n` line ends; the parser also accepts `\r\n`.
 - **Indentation**: the printer indents with **one tab per level**, like this repo's code. Tabs
   keep deep nesting readable (the test game nests up to 134 levels), and each reader can pick a
-  tab width. The parser ignores indentation.
+  tab width. The parser ignores indentation, except in the block body of a `script` lambda, where
+  it removes the block's indentation from each line ([8.2](#82-messages-comments-scripts-and-plugin-commands)).
 - **Line breaks** follow Prettier's TypeScript layout with tabs and a 100-column width, the same
-  settings as this repo, so a script looks the same after a user formats it.
-- Blank lines are not significant, with one exception: a blank line separates two adjacent
-  comments (see [7.6](#76-comments)). The printer puts blank lines only there and between
-  containers.
+  settings as this repo, so a script looks the same after a user formats it. The one exception is
+  the JavaScript inside `script(() => …)` lambdas, which is printed exactly as stored
+  ([8.2](#82-messages-comments-scripts-and-plugin-commands)); a user's formatter may reformat it.
+- Blank lines are not significant, with two exceptions: a blank line separates two adjacent
+  comments (see [7.6](#76-comments)), and blank lines inside a `script` lambda are lines of its
+  code. The printer puts blank lines only there and between containers.
 - Statements end with `;`.
 
 ### 4.2 Identifiers and reserved words
@@ -181,6 +184,11 @@ backslashes in strings as escapes: it would take `\c` as `c`, see a string endin
 unterminated, and reject some sequences such as `\x`. So the script's parser (#6) lexes strings
 itself, and the valid-TS copy (#45) re-escapes them.
 
+The JavaScript inside a `script(() => …)` lambda
+([8.2](#82-messages-comments-scripts-and-plugin-commands)) is the exception: it is code as MV
+stores it, so its strings are JavaScript strings, escapes and all (`$gameMessage.add("\"hi\"")`).
+The raw rules apply everywhere else, including the string form `script("…")`.
+
 **Rationale.** An earlier draft used `"` strings with `\"` as the only escape. That breaks for
 text that ends with a backslash: `"Wait...\"` can't tell a closing quote from an escaped one, so
 `\\` would need to be an escape too, and then MV's own `\\` (a literal backslash) would no longer
@@ -230,7 +238,8 @@ test game, `\c` (47k), `\i` (23k), `\{ \}` and `\> \<` (23k each) are the most u
 ### 4.6 Comments
 
 `//` comments run to the end of the line. They are **MV comments** (command `108`), not
-annotations of the script: see [7.6](#76-comments). There are no block comments.
+annotations of the script: see [7.6](#76-comments). There are no block comments. Inside a
+`script(() => …)` lambda, comments of either kind are part of the JavaScript.
 
 ## 5. Names and references
 
@@ -709,11 +718,11 @@ Finalized in #41.
 | weapon      | `party.has(weapons.X)`, `party.has(weapons.X, { includeEquipment: true })`                                                                                                                                   |
 | armor       | `party.has(armors.X)`, `party.has(armors.X, { includeEquipment: true })`                                                                                                                                     |
 | button      | `input.isPressed("ok")`                                                                                                                                                                                      |
-| script      | `script("$gameParty.size() > 2")`                                                                                                                                                                            |
+| script      | `script(() => $gameParty.size() > 2)`, or `script("…")` for code that isn't one expression ([8.2](#82-messages-comments-scripts-and-plugin-commands))                                                        |
 | vehicle     | `player.isRiding("boat")`                                                                                                                                                                                    |
 
 **Operands of `122`:** a constant (`5`), a variable (`variables.Y`), `random(1, 6)` (inclusive),
-`script("…")`, or game data:
+`script(() => …)` (or `script("…")`, as for conditions), or game data:
 
 | Game data           | Script                                                                                                                                                               |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -769,7 +778,7 @@ Finalized in #42.
 | 104                   | Select Item         | `selectItem(variables.Chosen, "keyItem");`                         |
 | 105 + 405             | Show Scrolling Text | `showScrollingText({ speed: 3, noFastForward: true }, "line", …);` |
 | 108 + 408             | Comment             | `//` lines, or `comment("line", …);` ([7.6](#76-comments))         |
-| 355 + 655             | Script              | `script("line", …);`                                               |
+| 355 + 655             | Script              | `script(() => code);`, `script(() => { … });` (see below)          |
 | 356                   | Plugin Command      | `plugin.Head(arg, …);` or `plugin("…");` (see below)               |
 
 **Show Text.** Each text line (`401`) is one string argument, after the options. A Show Text
@@ -839,8 +848,83 @@ always printed. **Select Item** takes the variable that receives the item's id a
 **Show Scrolling Text** takes its options and lines like Show Text. The editor's defaults are
 left out: `speed: 2` and `noFastForward: false`.
 
-**Script.** Each line of JavaScript (the `355`, then each `655`) is one string, laid out like
-Show Text. Editor support for the embedded JavaScript is #7.
+**Script.** The JavaScript of a Script command (the `355` line, then each `655` line) prints as
+a lambda, so that editors read it as the code it is. The code is printed **exactly as stored**:
+the printer never reformats it, and if a user's formatter changes it after an edit, the compiler
+stores what the lambda then holds. Everything outside lambda bodies still follows Prettier.
+
+- **Expression body.** One line holding one expression and nothing else (no `;`, and no
+  whitespace or comments before or after it) is `script(() => code);`:
+  `script(() => $gameSystem.disableSave());`. 191 Script commands in the test game.
+- **Block body.** Any other code is a block, one stored line per line (5,582 in the test game):
+
+  <!-- prettier-ignore -->
+  ```ts
+  script(() => {
+  	var actor = $gameActors.actor(1);
+  	if (actor.hp < 10) {
+  	    actor.gainHp(10);
+  	}
+
+  	var note = `first line
+  	second line`;
+  });
+  ```
+
+  Each stored line is printed after the block's **indentation prefix**: the indentation of the
+  line holding `script(`, plus one tab. A line keeps its own leading and trailing whitespace
+  after the prefix (`    actor.gainHp(10);` above has four spaces of its own). An empty stored
+  line prints as an empty line, without the prefix. A template literal, string or comment
+  spanning lines gets the prefix inside it too (`second line` above), so it looks indented; the
+  compiler removes the prefix again.
+
+- **String fallback.** Code that can't be a lambda prints as one string per line, laid out like
+  Show Text: `script("if (");`. That is code that doesn't parse, a line containing another line
+  terminator (U+2028 or U+2029, which some editors treat as line breaks), and code that parses
+  alone but not as a lambda's body (a hashbang, `#!…`, which must start the code). The test game
+  has none.
+
+**Script conditions** (`111`), **operands** (`122`) and the **route step** `script` (code 45)
+hold one value, so they take an expression body when the code is one expression as above:
+`if (script(() => $gameVariables.value(3) > 2)) { … }`,
+`variables.Roll = script(() => Math.max(1, 2));`,
+`setMovementRoute(event).moveUp().script(() => this.setOpacity(128));`. Anything else is the
+string: `if (script("Input.isPressed('up');")) { … }` (the 32 conditions of the test game that
+end with `;`). The test game has 295 conditions, 3 operands and 13 route steps as lambdas.
+
+- **How the printer decides.** It parses the code with acorn (`ecmaVersion: "latest"`, as a
+  script, not a module), then parses the lambda as it would print it and checks that the body
+  reads back as exactly the stored text. So these are not one expression: an object literal
+  without parentheses, `{ a: 1 }` (it would read as a block), a sequence `a, b` (two arguments),
+  a declaration such as `function f() {}`, and an expression followed by a line comment (the
+  comment would swallow the closing `)`). A Script command prints them as a block; a condition,
+  operand or step as a string. `({ a: 1 })` is one expression.
+- **Layout.** A lambda body isn't reflowed to the 100-column width. Around it, the layout is
+  Prettier's for an expression body that is one identifier as wide as the code: a long condition
+  breaks as `if (`, `script(`, `() =>`, then the code on its own line. A block body always
+  breaks. A lambda isn't a simple call argument to Prettier, so a route with a lambda step and
+  two or more steps prints one step per line.
+- **`this`** is still the interpreter in a Script, condition or operand, and the character in a
+  route step, as in MV. Typing it is left to #7 and #45.
+
+**Compiling** (#6). The compiler accepts both forms (the lambda and the string) for each of
+these commands.
+
+- An **expression body** is the source text of the arrow's body, from its first to its last
+  character. The whitespace between `=>` and the body, and after it, is layout.
+- A **block body** is the lines between the line ending with `{` and the line holding the
+  closing `}`. The prefix is the indentation of the line holding `script(`, plus one tab. The
+  compiler removes exactly that prefix from each line; an empty line (or one holding only part of
+  the prefix, as an editor may trim it) is an empty stored line; any other line that doesn't start
+  with the prefix is an error. The first line is the `355`, and each later line a `655`.
+  `script(() => {})` is one empty line.
+- A condition, operand or route step takes an expression body or a string, not a block.
+- The printer writes an expression body on one line, but an edit may spread one over several.
+  The compiler then keeps its first line as it is and removes the prefix from each later line,
+  as for a block. A Script command stores the lines as a `355` and `655`s; a condition, operand
+  or route step stores them as one string joined with `\n`.
+
+Editor support for the JavaScript (types, completions) is #7.
 
 **Plugin commands.** MV stores a plugin command as one line, `Head arg1 arg2`. The script splits
 it at single spaces:
@@ -946,7 +1030,7 @@ setMovementRoute(player, { skippable: true })
 	.moveUp({ indent: 0 })
 	.wait(15)
 	.playSe("Knock", { volume: 80 })
-	.script("this.setOpacity(128)");
+	.script(() => this.setOpacity(128));
 ```
 
 - Options and defaults (the MV editor's): `repeat: false`, `skippable: false`, `wait: true`.
@@ -954,8 +1038,9 @@ setMovementRoute(player, { skippable: true })
 - Steps take the arguments of the catalog: `jump(x, y)`, `wait(frames)`,
   `switchOn(switches.X)`, `switchOff(switches.X)`, `changeSpeed(1–6)`, `changeFrequency(1–5)`,
   `changeImage("Actor1", index)`, `changeOpacity(0–255)`, `changeBlendMode("additive")`,
-  `playSe("Knock", { volume, pitch, pan })` (defaults as for Play SE), `script("…")`. The other
-  39 steps take no arguments (`moveDown()`, `turnTowardPlayer()`, `throughOn()`, …).
+  `playSe("Knock", { volume, pitch, pan })` (defaults as for Play SE), `script(() => code)` (or
+  `script("…")`, see [8.2](#82-messages-comments-scripts-and-plugin-commands)). The other 39
+  steps take no arguments (`moveDown()`, `turnTowardPlayer()`, `throughOn()`, …).
 - The `505` lines after a `205` are copies of the steps, and the route's final `{ "code": 0 }`
   is its terminator. Both are derived.
 - **Step indents.** Steps store `indent: null`, and nothing reads a step's indent. But 3,369 steps
@@ -965,7 +1050,8 @@ setMovementRoute(player, { skippable: true })
   `.playSe("Knock", { volume: 80, indent: 0 })`).
 - **Layout** follows Prettier's member chains: a route with one step stays on one line with its
   call (only arguments break), and a route with two or more is on one line when it fits and
-  otherwise one step per line.
+  otherwise one step per line. A route with a `script(() => …)` step and two or more steps is
+  always one step per line, as a lambda isn't a simple argument to Prettier.
 
 **Details.**
 
@@ -1158,16 +1244,25 @@ defineCommonEvent({ id: 12, name: "Open chest", trigger: "none" }, (event) => {
 	changeItems(items.Potion, +2);
 	showText("You found \c[3]2 Potions\c[0]!");
 	event.selfSwitches.A = true;
+	script(() => {
+		// Count chests for the achievements screen.
+		$gameSystem._chestsOpened = ($gameSystem._chestsOpened || 0) + 1;
+	});
 });
 
 defineCommonEvent({ id: 20, name: "Rain", trigger: "parallel", switch: switches.Raining }, () => {
-	setWeatherEffect("rain", 5, 60);
+	if (script(() => $gameScreen.weatherType() === "none")) {
+		setWeatherEffect("rain", 5, 60);
+	}
 	wait(600);
 });
 ```
 
 - Each event that calls "Open chest" is its `event`, so each chest keeps its own self switch A.
 - "Rain" runs by itself, so it has no running event and takes no parameter.
+- The chest's Script command (two stored lines) is a block body, and the rain's script
+  condition is one expression, so it is an expression body. Both are JavaScript as MV stores it:
+  the `//` line is part of the code, not an MV comment, and `"none"` is a JavaScript string.
 
 ### 10.2 A map's events
 
@@ -1224,7 +1319,8 @@ defineMapEvent({ id: 4, name: "Old gate", x: 12, y: 6 }, [
 		setMovementRoute(map.events.Guard, { skippable: true })
 			.moveLeft()
 			.moveLeft({ indent: 0 })
-			.turnRight();
+			.turnRight()
+			.script(() => this.setOpacity(128));
 		changeItems(items.Rusty_key, -1);
 		switches.Gate_open = true;
 		event.selfSwitches.A = true;
@@ -1256,6 +1352,7 @@ defineMapEvent({ id: 5, name: "Cave mouth", x: 20, y: 14 }, [
 - `// <sound: creak>` is an MV comment that a plugin might read. It is saved as a `108` command.
 - `moveLeft({ indent: 0 })` keeps one of the step indents described in
   [8.3](#83-movement-characters-screen-audio-and-pictures).
+- In the route's `script` step, `this` is the guard, the character the route moves.
 - The battle has win and escape handlers and no `onLose`: it can be escaped, and losing is a game
   over.
 - When the cave mouth calls "Open chest" after a win, the cave mouth is that common event's

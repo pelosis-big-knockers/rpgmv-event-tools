@@ -1,6 +1,6 @@
 /// <reference types="rpgmv-event-tools" />
 
-// Hand-written cases for each rule of the grammar. Scripts are one line per string.
+// Hand-written cases for each rule of the grammar.
 
 defineCommonEvent({ id: 1, name: "Raw strings", trigger: "none" }, () => {
 	// A backslash never escapes: each string ends at its first matching quote.
@@ -25,27 +25,42 @@ defineCommonEvent({ id: 2, name: "Text codes", trigger: "none" }, () => {
 	comment("Codes in \C[2]any\C[0] raw string");
 });
 
-defineCommonEvent({ id: 3, name: "Embedded JavaScript", trigger: "none" }, () => {
-	script("$gameVariables.setValue(1, 'ok');", "if ($gameSwitches.value(2)) {", "}");
-	script('$gameMessage.add("She said \"hi\"");');
-	script(`$gameMessage.add("It's " + 'late');`);
-	script("var path = 'C:\\';", "var open = '", "var slash = 'end\");
-	script("/* unclosed comment", "$gamePlayer.x;");
-	script(
-		"const s = `template ${1 + 2}`;",
-		"$gameParty.gainGold(100);",
-	);
-	if (script("$gameParty.size() > 2")) {
-		variables.Day = script("Math.floor(Math.random() * 3)");
+defineCommonEvent({ id: 3, name: "JavaScript lambdas", trigger: "none" }, () => {
+	// A lambda's body is JavaScript: its strings have escapes and no text codes.
+	script(() => {
+		$gameVariables.setValue(1, 'ok');
+		$gameMessage.add("She said \"hi\" \C[2]");
+		var path = 'C:\\', slash = "\\";
+
+		var s = `template ${1 + 2}
+		  still the template ${"}"})`; // a comment )
+		if ($gameSwitches.value(2)) { f(a, [b, { c: ")" }]); }
+	});
+	script(() => $gameMessage.add("It's " + 'late'));
+	script(() => ({ a: "\"" }));
+	if (script(() => $gameParty.size() > 2 && /[")]/.test(s))) {
+		variables.Day = script(() => Math.floor(Math.random() * 3));
 	}
+	script(
+		() =>
+			$gameVariables.value(1111111111111111111111111111111111111111) + $gameVariables.value("\")"),
+	);
 	setMovementRoute(player, { skippable: true })
 		.turnUp()
-		.script("this.setOpacity(128)")
-		.script('this._opacity = "x"');
-	setMovementRoute(event).moveUp().script("this.jump(0, 0)");
+		.script(() => this.setOpacity(128))
+		.script(() => this._opacity = "x\"");
+	setMovementRoute(event).moveUp().script(() => this.jump(0, 0));
+	// The string fallback, and calls that aren't lambdas, have raw strings.
+	script("var path = 'C:\';", "if (");
+	script(
+		"$gameVariables.value(1111111111111111111111111111111111111111) + $gameVariables.value(\C[2]\",
+	);
+	if (script("Input.isPressed('ok');")) {
+	}
+	setMovementRoute(player).script("this.jump(0, 0);").moveUp();
 	plugin.script("not", "JavaScript \C[2]");
 	commonEvents.script();
-	showText('script("not a call")');
+	showText('script(() => "not a call")');
 });
 
 defineCommonEvent({ id: 4, name: "Raw fallback", trigger: "none" }, () => {

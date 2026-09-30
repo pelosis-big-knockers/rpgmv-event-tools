@@ -6,12 +6,13 @@
  * It follows Prettier's algorithm closely, including conditional groups (used to "hug" a last
  * argument) and fill, so scripts built from the same documents Prettier builds come out exactly
  * as Prettier would format them. On top of that, {@link mark}s record which output line a point
- * of the document lands on, which is how source maps are built.
+ * of the document lands on, which is how source maps are built, and {@link verbatim} text (lines
+ * of JavaScript kept as stored) is never trimmed.
  */
 
 export type Doc = string | readonly Doc[] | DocCommand;
 
-type DocCommand = Group | Indent | Line | IfBreak | Fill | BreakParent | Mark;
+type DocCommand = Group | Indent | Line | IfBreak | Fill | BreakParent | Mark | Verbatim;
 
 interface Group {
 	readonly type: "group";
@@ -58,6 +59,13 @@ interface Mark {
 	readonly type: "mark";
 	/** Called with the 0-based output line the mark is printed on. */
 	readonly onPrint: (line: number) => void;
+}
+
+/** Text printed exactly as given (see {@link verbatim}). */
+interface Verbatim {
+	readonly type: "verbatim";
+	/** The text, without line breaks. */
+	readonly text: string;
 }
 
 // Builders, named as in Prettier.
@@ -108,6 +116,16 @@ export function mark(onPrint: (line: number) => void): Doc {
 	return { type: "mark", onPrint };
 }
 
+/**
+ * Text kept exactly as given, such as a line of JavaScript as MV stores it. The printer never
+ * trims its trailing whitespace, as it does for other text before a line break. `text` must not
+ * contain line breaks. After a hard line it starts at the current indentation, and an empty
+ * `text` leaves that line empty. It measures as its width, like other text.
+ */
+export function verbatim(text: string): Doc {
+	return { type: "verbatim", text };
+}
+
 export function join(separator: Doc, docs: readonly Doc[]): Doc[] {
 	const parts: Doc[] = [];
 	docs.forEach((doc, index) => {
@@ -141,6 +159,7 @@ export function willBreak(doc: Doc): boolean {
 		case "breakParent":
 			return true;
 		case "mark":
+		case "verbatim":
 			return false;
 	}
 }
@@ -166,6 +185,7 @@ export function canBreak(doc: Doc): boolean {
 			return true;
 		case "breakParent":
 		case "mark":
+		case "verbatim":
 			return false;
 	}
 }
@@ -202,6 +222,8 @@ export function printDoc(doc: Doc, options: PrintOptions = SCRIPT_PRINT_OPTIONS)
 	let position = 0;
 	let lineNumber = 0;
 	let shouldRemeasure = false;
+	/** How many entries at the start of `out` are never trimmed: up to the last verbatim text. */
+	let kept = 0;
 
 	while (commands.length > 0) {
 		const { indent: ind, mode, doc: current } = commands.pop() as Command;
@@ -323,7 +345,7 @@ export function printDoc(doc: Doc, options: PrintOptions = SCRIPT_PRINT_OPTIONS)
 				if (mode === "flat") {
 					shouldRemeasure = true;
 				}
-				trimTrailingWhitespace(out);
+				trimTrailingWhitespace(out, kept);
 				out.push(`\n${ind.value}`);
 				position = ind.length;
 				lineNumber++;
@@ -332,6 +354,13 @@ export function printDoc(doc: Doc, options: PrintOptions = SCRIPT_PRINT_OPTIONS)
 				break;
 			case "mark":
 				current.onPrint(lineNumber);
+				break;
+			case "verbatim":
+				if (current.text !== "") {
+					out.push(current.text);
+					position += stringWidth(current.text);
+					kept = out.length;
+				}
 				break;
 		}
 	}
@@ -409,6 +438,9 @@ function fits(
 					remaining--;
 				}
 				break;
+			case "verbatim":
+				remaining -= stringWidth(doc.text);
+				break;
 			case "breakParent":
 			case "mark":
 				break;
@@ -466,14 +498,16 @@ function propagateBreaks(doc: Doc): void {
 				return true;
 			case "line":
 			case "mark":
+			case "verbatim":
 				return false;
 		}
 	};
 	visit(doc);
 }
 
-function trimTrailingWhitespace(out: string[]): void {
-	while (out.length > 0) {
+/** Trims spaces and tabs from the end of `out`, leaving its first `kept` entries as they are. */
+function trimTrailingWhitespace(out: string[], kept: number): void {
+	while (out.length > kept) {
 		const trimmed = (out[out.length - 1] as string).replace(/[ \t]+$/, "");
 		if (trimmed.length > 0) {
 			out[out.length - 1] = trimmed;

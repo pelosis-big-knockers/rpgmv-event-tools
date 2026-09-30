@@ -1,5 +1,5 @@
 {
-	"$comment": "The script is TypeScript syntax with raw strings (docs/script-syntax.md). This grammar is VS Code's TypeScript grammar plus an injection for the places the script differs. The injection applies inside every TypeScript rule (blocks, calls, arrays, ...), and its L: priority makes its rules win over TypeScript's at the same position, so TypeScript's own strings never start. It stays out of comments, strings, script(...) arguments and command(...) arguments.",
+	"$comment": "The script is TypeScript syntax with raw strings (docs/script-syntax.md). This grammar is VS Code's TypeScript grammar plus an injection for the places the script differs. The injection applies inside every TypeScript rule (blocks, calls, arrays, ...), and its L: priority makes its rules win over TypeScript's at the same position, so TypeScript's own strings never start. It stays out of comments, strings, the JavaScript of script(() => ...) lambdas and the arguments of command(...).",
 	"name": "RPG Maker MV Script",
 	"scopeName": "source.rpgmv-script",
 	"patterns": [
@@ -8,13 +8,13 @@
 		}
 	],
 	"injections": {
-		"L:source.rpgmv-script -comment -string -meta.embedded -meta.script-arguments -meta.raw-fallback-arguments": {
+		"L:source.rpgmv-script -comment -string -meta.script-lambda -meta.raw-fallback-arguments": {
 			"patterns": [
 				{
 					"include": "#raw-fallback"
 				},
 				{
-					"include": "#script-call"
+					"include": "#script-lambda"
 				},
 				{
 					"include": "#string"
@@ -48,109 +48,40 @@
 				}
 			]
 		},
-		"script-call": {
-			"$comment": "Spec 8.1-8.3: script(\"...\", ...) (Script, and a script condition or operand) and the move-route step .script(\"...\"), whose string arguments are JavaScript. plugin.script(...) is a plugin command, so a step's dot must follow a ) or start the line.",
-			"name": "meta.function-call.script.rpgmv-script",
-			"begin": "(?:(?<![_$[:alnum:].])(script)|(?:(?<=\\))\\s*|^\\s*)(\\.)\\s*(script))\\s*(\\()",
+		"script-lambda": {
+			"$comment": "Spec 8.2: script(() => ...) and the move-route step .script(() => ...), whose lambda body is JavaScript kept as stored. The TypeScript rules read the lambda as they would any code; the injection stays out of it, so its strings are JavaScript strings. The call is only matched when a lambda follows its ( on the same line, or when the line breaks after the ( (a long lambda; a long string is still read as a raw string there). A step's dot must follow a ) or start the line, as TypeScript's call rule starts there too and would otherwise stay open; plugin.script(...) is a plugin command. script(\"...\"), the fallback for code that can't be a lambda, is plain raw strings.",
+			"begin": "(?:(?<![_$[:alnum:].])|(?:(?<=\\))|^)\\s*(\\.)\\s*)(script)\\s*(\\()(?=\\s*(?:\\(\\s*\\)\\s*=>|$))",
 			"beginCaptures": {
 				"1": {
-					"name": "entity.name.function.script.rpgmv-script"
+					"name": "punctuation.accessor.ts"
 				},
 				"2": {
-					"name": "punctuation.accessor.rpgmv-script"
+					"name": "entity.name.function.ts"
 				},
 				"3": {
-					"name": "entity.name.function.script.rpgmv-script"
-				},
-				"4": {
-					"name": "meta.brace.round.rpgmv-script"
+					"name": "meta.brace.round.ts"
 				}
 			},
 			"end": "\\)",
 			"endCaptures": {
 				"0": {
-					"name": "meta.brace.round.rpgmv-script"
+					"name": "meta.brace.round.ts"
 				}
 			},
-			"contentName": "meta.script-arguments.rpgmv-script",
 			"patterns": [
 				{
-					"include": "#script-string"
+					"$comment": "Starts before the whitespace, so it wins over TypeScript's arrow rule when the lambda starts a line.",
+					"name": "meta.script-lambda.rpgmv-script",
+					"begin": "(?=\\s*\\(\\s*\\)\\s*=>)",
+					"end": "(?=[,)])",
+					"patterns": [
+						{
+							"include": "source.ts#expression"
+						}
+					]
 				},
 				{
 					"include": "source.ts#expression"
-				}
-			]
-		},
-		"script-string": {
-			"$comment": "A raw string holding one line of JavaScript. Each string is matched whole, and a capture's patterns only see the captured text, so the JavaScript can never run past the closing quote.",
-			"patterns": [
-				{
-					"match": "(\")([^\"]*)(\"|$)",
-					"captures": {
-						"1": {
-							"name": "string.quoted.double.rpgmv-script punctuation.definition.string.begin.rpgmv-script"
-						},
-						"2": {
-							"name": "meta.embedded.line.js",
-							"patterns": [
-								{
-									"include": "source.js"
-								}
-							]
-						},
-						"3": {
-							"name": "string.quoted.double.rpgmv-script punctuation.definition.string.end.rpgmv-script"
-						}
-					}
-				},
-				{
-					"match": "(')([^']*)('|$)",
-					"captures": {
-						"1": {
-							"name": "string.quoted.single.rpgmv-script punctuation.definition.string.begin.rpgmv-script"
-						},
-						"2": {
-							"name": "meta.embedded.line.js",
-							"patterns": [
-								{
-									"include": "source.js"
-								}
-							]
-						},
-						"3": {
-							"name": "string.quoted.single.rpgmv-script punctuation.definition.string.end.rpgmv-script"
-						}
-					}
-				},
-				{
-					"match": "(`)([^`]*)(`|$)",
-					"captures": {
-						"1": {
-							"name": "string.quoted.other.backtick.rpgmv-script punctuation.definition.string.begin.rpgmv-script"
-						},
-						"2": {
-							"name": "meta.embedded.line.js",
-							"patterns": [
-								{
-									"include": "source.js"
-								}
-							]
-						},
-						"3": {
-							"name": "string.quoted.other.backtick.rpgmv-script punctuation.definition.string.end.rpgmv-script"
-						}
-					}
-				},
-				{
-					"$comment": "Never matches. vscode-textmate only loads the grammars that patterns refer to, not those that captures refer to, so this makes it load the JavaScript grammar.",
-					"begin": "(?!)",
-					"end": "(?!)",
-					"patterns": [
-						{
-							"include": "source.js"
-						}
-					]
 				}
 			]
 		},

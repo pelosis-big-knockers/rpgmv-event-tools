@@ -1,4 +1,3 @@
-import * as prettier from "prettier";
 import { describe, expect, it } from "vitest";
 import {
 	createNames,
@@ -14,6 +13,7 @@ import {
 	type ListLocation,
 	type ScriptContainer,
 } from "../src/index.js";
+import { expectPrettierStable } from "./support/prettier.js";
 import { describeWithGame } from "./support/test-game.js";
 
 const named = (...names: string[]) => [null, ...names.map((name) => ({ name }))];
@@ -64,15 +64,6 @@ function body(script: DecompiledScript): string {
 		.join("\n");
 }
 
-async function expectPrettierStable(script: DecompiledScript): Promise<void> {
-	const formatted = await prettier.format(script.text, {
-		parser: "typescript",
-		useTabs: true,
-		printWidth: 100,
-	});
-	expect(formatted).toBe(script.text);
-}
-
 /** A Conditional Branch with an empty body. */
 const ifOnly = (parameters: unknown[]) => [cmd(111, 0, parameters), cmd(0, 1), cmd(412, 0)];
 
@@ -111,7 +102,8 @@ describe("conditional branch", () => {
 			[[9, 1, true], "party.has(weapons.Club, { includeEquipment: true })"],
 			[[10, 1, true], "party.has(armors.Cloak, { includeEquipment: true })"],
 			[[11, "ok"], 'input.isPressed("ok")'],
-			[[12, "$gameParty.size() > 2"], 'script("$gameParty.size() > 2")'],
+			[[12, "$gameParty.size() > 2"], "script(() => $gameParty.size() > 2)"],
+			[[12, "Input.isPressed('up');"], `script("Input.isPressed('up');")`],
 			[[13, 2], 'player.isRiding("airship")'],
 		];
 		const script = decompileList(cases.flatMap(([parameters]) => ifOnly(parameters)));
@@ -133,6 +125,7 @@ describe("conditional branch", () => {
 			[6, -1, 5],
 			[9, 1, 0],
 			[11, "o\nk"],
+			[12, "a\nb"],
 			[13, 3],
 			[14, 1],
 		];
@@ -312,6 +305,7 @@ describe("game state", () => {
 			operand(1, 3),
 			operand(2, 1, 6),
 			operand(4, "$gameParty.gold()"),
+			operand(4, "$gameParty.gold();"),
 			operand(3, 0, 1, 0),
 			operand(3, 1, 1, 0),
 			operand(3, 2, 1, 0),
@@ -338,7 +332,8 @@ describe("game state", () => {
 				"variables.Knocks = -4;",
 				"variables.Day = variables.Price;",
 				"variables.Day = random(1, 6);",
-				'variables.Day = script("$gameParty.gold()");',
+				"variables.Day = script(() => $gameParty.gold());",
+				'variables.Day = script("$gameParty.gold();");',
 				"variables.Day = party.count(items.Lantern);",
 				"variables.Day = party.count(weapons.Club);",
 				"variables.Day = party.count(armors.Cloak);",

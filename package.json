@@ -20,7 +20,7 @@
 		"format:check": "prettier --check .",
 		"package": "npm run package -w packages/vscode",
 		"test": "vitest run && npm run test:grammar",
-		"test:grammar": "vscode-tmgrammar-snap --config packages/vscode/package.json -g packages/vscode/test/grammars/TypeScript.tmLanguage.json -g packages/vscode/test/grammars/JavaScript.tmLanguage.json \"packages/vscode/test/syntax/*.mvscript\"",
+		"test:grammar": "vscode-tmgrammar-snap --config packages/vscode/package.json -g packages/vscode/test/grammars/TypeScript.tmLanguage.json \"packages/vscode/test/syntax/*.mvscript\"",
 		"test:watch": "vitest",
 		"test:extension": "npm run test:extension -w packages/vscode"
 	},
