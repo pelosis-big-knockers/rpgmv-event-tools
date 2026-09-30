@@ -1,0 +1,30 @@
+/// <reference types="rpgmv-event-tools" />
+
+defineCommonEvent({ id: 1, name: "Toggle lantern", trigger: "none" }, () => {
+	if (switches["Lantern lit"]) {
+		switches["Lantern lit"] = false;
+		showText("You put out the lantern.");
+	} else {
+		switches["Lantern lit"] = true;
+		showText("You light the lantern.");
+	}
+});
+
+defineCommonEvent({ id: 2, name: "Greet keeper", trigger: "none" }, () => {
+	showText("Welcome, traveller.");
+	showChoices(
+		[
+			choice("Ask about the door", () => {
+				showText("The door opens for those who carry a light.");
+				switches["Met the keeper"] = true;
+			}),
+			choice("Leave", () => {}),
+		],
+		{ cancel: 1 },
+	);
+});
+
+defineCommonEvent({ id: 3, name: "Count visit", trigger: "none" }, () => {
+	variables.Visits += 1;
+	commonEvents["Toggle lantern"]();
+});

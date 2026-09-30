@@ -1,0 +1,10 @@
+/// <reference types="rpgmv-event-tools" />
+
+defineMapEvent({ id: 1, name: "Keeper", x: 1, y: 1 }, [
+	page({ trigger: "action" }, () => {
+		commonEvents["Greet keeper"]();
+	}),
+	page({ trigger: "action", when: () => switches["Met the keeper"] }, () => {
+		showText("Go on, the door is open.");
+	}),
+]);

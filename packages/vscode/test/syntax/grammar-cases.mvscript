@@ -1,0 +1,28 @@
+/// <reference types="rpgmv-event-tools" />
+
+defineCommonEvent({ id: 1, name: "Grammar cases", trigger: "none" }, () => {
+	showText(
+		"\C[2]Mira\C[0]: The gate costs 50\G. You have \V[1].",
+		"\{Wait!\} \.\.\. \!Did you hear that?\|",
+		"The key is in C:\",
+	);
+	showText('She said "hi".', `"It's late," he said.`, `All three: "'` + "` and more");
+	showText("\fs[20]Plugin codes\fs[0], a stray \ backslash and \\ one.");
+	// A comment keeps \C[2] as is
+	// and "quotes" too
+	script(
+		"var name = $gameActors.actor(1).name();",
+		"$gameMessage.add('Hello, ' + name);",
+		'$gameVariables.setValue(2, name.length + "!".length);',
+		`if (name.endsWith('\\')) { $gameMessage.add("It's a path"); }`,
+	);
+	if (script("$gameParty.size() > 2")) {
+		variables.Visits = script("Math.floor(Math.random() * 3)");
+	}
+	setMovementRoute(player, { skippable: true })
+		.script("this.setOpacity(128);")
+		.script('this._name = "Mira";');
+	plugin.Lighting("on", 3);
+	plugin.script("run", "\C[2]");
+	command(999, ['\\c[2]Raw "text"', 1]);
+});

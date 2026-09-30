@@ -50,7 +50,30 @@
 					"when": "false"
 				}
 			]
-		}
+		},
+		"languages": [
+			{
+				"id": "rpgmv-script",
+				"aliases": [
+					"RPG Maker MV Script",
+					"rpgmv-script"
+				],
+				"extensions": [
+					".mvscript"
+				],
+				"configuration": "./syntaxes/language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "rpgmv-script",
+				"scopeName": "source.rpgmv-script",
+				"path": "./syntaxes/rpgmv-script.tmLanguage.json",
+				"embeddedLanguages": {
+					"meta.embedded.line.js": "javascript"
+				}
+			}
+		]
 	},
 	"scripts": {
 		"build": "node esbuild.mjs",

@@ -6,3 +6,6 @@ LICENSE
 
 # Fixtures mirror the RPG Maker MV editor's own JSON layout (one entry per line) and must not be reformatted.
 **/test/fixtures/
+
+# Grammars vendored from VS Code, kept exactly as published.
+packages/vscode/test/grammars/

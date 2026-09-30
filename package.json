@@ -19,7 +19,8 @@
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"package": "npm run package -w packages/vscode",
-		"test": "vitest run",
+		"test": "vitest run && npm run test:grammar",
+		"test:grammar": "vscode-tmgrammar-snap --config packages/vscode/package.json -g packages/vscode/test/grammars/TypeScript.tmLanguage.json -g packages/vscode/test/grammars/JavaScript.tmLanguage.json \"packages/vscode/test/syntax/*.mvscript\"",
 		"test:watch": "vitest",
 		"test:extension": "npm run test:extension -w packages/vscode"
 	},
@@ -33,6 +34,9 @@
 		"oxlint": "^1.86.0",
 		"prettier": "^3.9.9",
 		"typescript": "~7.0.2",
-		"vitest": "^5.0.2"
+		"vitest": "^5.0.2",
+		"vscode-oniguruma": "^2.0.1",
+		"vscode-textmate": "^9.3.2",
+		"vscode-tmgrammar-test": "^0.1.3"
 	}
 }
