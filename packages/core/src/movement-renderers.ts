@@ -24,6 +24,7 @@ import {
 	symbolReference,
 	type Expr,
 } from "./script-docs.js";
+import { audio } from "./script-terms.js";
 
 type Option = readonly [key: string, value: Expr];
 
@@ -49,8 +50,6 @@ const BLEND_MODES: Record<number, string> = {
 	2: "multiply",
 	3: "screen",
 };
-/** The keys of an audio parameter, in the order MV stores them. */
-const AUDIO_KEYS = ["name", "volume", "pitch", "pan"];
 /** The keys of a move route, in the order MV stores them. */
 const ROUTE_KEYS = ["list", "repeat", "skippable", "wait"];
 
@@ -147,26 +146,6 @@ function colorArray(value: unknown): Expr | undefined {
 	return Array.isArray(value) && value.length === 4 && value.every(isNumber)
 		? arrayLiteral(value.map(numberLiteral))
 		: undefined;
-}
-
-/**
- * An audio parameter, `{ name, volume, pitch, pan }`: the name, and options for the values that
- * aren't MV's defaults (volume 90, pitch 100, pan 0).
- */
-function audio(value: unknown): [name: Expr, options: Option[]] | undefined {
-	if (!isRecord(value) || !hasKeys(value, AUDIO_KEYS)) {
-		return undefined;
-	}
-	const { name, volume, pitch, pan } = value;
-	if (!isText(name) || !isNumber(volume) || !isNumber(pitch) || !isNumber(pan)) {
-		return undefined;
-	}
-	const options = [
-		option("volume", volume, 90, numberLiteral(volume)),
-		option("pitch", pitch, 100, numberLiteral(pitch)),
-		option("pan", pan, 0, numberLiteral(pan)),
-	].filter((entry) => entry !== undefined);
-	return [scriptString(name), options];
 }
 
 /**

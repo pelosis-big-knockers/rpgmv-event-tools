@@ -14,10 +14,9 @@ import {
 	arrowBlock,
 	booleanLiteral,
 	call,
-	callChain,
+	builderChain,
 	computedMember,
 	identifier,
-	methodCall,
 	nullLiteral,
 	numberLiteral,
 	objectLiteral,
@@ -27,7 +26,7 @@ import {
 	unary,
 	type Expr,
 } from "./script-docs.js";
-import { troopMember } from "./script-terms.js";
+import { audio, troopMember } from "./script-terms.js";
 
 const VEHICLES = ["boat", "ship", "airship"];
 const PARAMETERS = [
@@ -52,8 +51,6 @@ const LOCATION_INFO = [
 const GOODS: readonly NamedKind[] = ["item", "weapon", "armor"];
 /** Battle Processing's result branches, by branch code. */
 const HANDLERS: Record<number, string> = { 601: "onWin", 602: "onEscape", 603: "onLose" };
-/** Audio defaults (the MV editor's), left out of the options. */
-const AUDIO_DEFAULTS = { volume: 90, pitch: 100, pan: 0 } as const;
 
 type Args = readonly (Expr | undefined)[] | undefined;
 type Options = readonly (readonly [key: string, value: Expr])[];
@@ -154,30 +151,10 @@ function enemyTarget(index: unknown): Expr | undefined {
 	return isIndex(index) ? troopMember(index) : undefined;
 }
 
-/**
- * The arguments for an audio parameter: `"Name"`, then options for a volume, pitch or pan other
- * than the default. `undefined` unless the object has exactly MV's keys, in MV's order.
- */
-function audio(value: unknown): Expr[] | undefined {
-	if (typeof value !== "object" || value === null || Array.isArray(value)) {
-		return undefined;
-	}
-	const record = value as Record<string, unknown>;
-	const keys = Object.keys(record);
-	if (keys.join() !== "name,volume,pitch,pan" || !isText(record["name"])) {
-		return undefined;
-	}
-	const entries: [string, Expr][] = [];
-	for (const [key, fallback] of Object.entries(AUDIO_DEFAULTS)) {
-		const setting = record[key];
-		if (!isNumber(setting)) {
-			return undefined;
-		}
-		if (setting !== fallback) {
-			entries.push([key, numberLiteral(setting)]);
-		}
-	}
-	return [scriptString(record["name"]), ...options(entries)];
+/** The arguments for an audio parameter: `"Name"`, then options that aren't the defaults. */
+function audioArgs(value: unknown): Expr[] | undefined {
+	const parts = audio(value);
+	return parts && [parts[0], ...options(parts[1])];
 }
 
 /**
@@ -303,11 +280,7 @@ const shop: CommandRenderer = (node, context) => {
 		}
 		calls.push(["goods", args]);
 	}
-	const opener = call("shop", options(purchaseOnly));
-	const [only] = calls;
-	return statement(
-		calls.length === 1 && only ? methodCall(opener, only[0], only[1]) : callChain(opener, calls),
-	);
+	return statement(builderChain(call("shop", options(purchaseOnly)), calls));
 };
 
 /** 126–128: `changeItems(items.X, +1);`, with `{ includeEquipment: true }` for 127 and 128. */
@@ -356,7 +329,7 @@ function access(name: string): CommandRenderer {
 
 /** 132, 133, 139: `changeBattleBgm("Battle2", { volume: 80 });`. */
 function changeAudio(name: string): CommandRenderer {
-	return simple(name, 1, (p) => audio(p[0]));
+	return simple(name, 1, (p) => audioArgs(p[0]));
 }
 
 /** 339: `forceAction(subject, skills.X, target)`; the subject is an enemy or an actor. */
@@ -465,7 +438,7 @@ export const BATTLE_RENDERERS: readonly (readonly [number, CommandRenderer])[] =
 	[
 		140,
 		simple("changeVehicleBgm", 2, (p) => {
-			const sound = audio(p[1]);
+			const sound = audioArgs(p[1]);
 			return sound && [named(VEHICLES, p[0]), ...sound];
 		}),
 	],

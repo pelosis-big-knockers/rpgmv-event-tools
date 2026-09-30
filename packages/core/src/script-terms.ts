@@ -12,6 +12,50 @@ import {
 } from "./script-docs.js";
 import { isIdentifierName, type SymbolKey } from "./symbols.js";
 
+/** An audio parameter's keys, in the order MV writes them. */
+const AUDIO_KEYS = ["name", "volume", "pitch", "pan"];
+/** The MV editor's audio defaults, left out of the options. */
+const AUDIO_DEFAULTS = [
+	["volume", 90],
+	["pitch", 100],
+	["pan", 0],
+] as const;
+
+/**
+ * An audio parameter, `{ name, volume, pitch, pan }`: the name as a string, and options for the
+ * values that aren't MV's defaults (volume 90, pitch 100, pan 0). `undefined` unless the object
+ * has exactly MV's keys, in MV's order, a name without line breaks and numbers for the rest.
+ */
+export function audio(
+	value: unknown,
+): [name: Expr, options: [key: string, value: Expr][]] | undefined {
+	if (typeof value !== "object" || value === null || Array.isArray(value)) {
+		return undefined;
+	}
+	const record = value as Record<string, unknown>;
+	const keys = Object.keys(record);
+	const name = record["name"];
+	if (
+		keys.length !== AUDIO_KEYS.length ||
+		keys.some((key, index) => key !== AUDIO_KEYS[index]) ||
+		typeof name !== "string" ||
+		/[\r\n]/.test(name)
+	) {
+		return undefined;
+	}
+	const options: [key: string, value: Expr][] = [];
+	for (const [key, fallback] of AUDIO_DEFAULTS) {
+		const setting = record[key];
+		if (typeof setting !== "number" || !Number.isFinite(setting)) {
+			return undefined;
+		}
+		if (setting !== fallback) {
+			options.push([key, numberLiteral(setting)]);
+		}
+	}
+	return [scriptString(name), options];
+}
+
 /** The body's parameter for the running event. */
 export const EVENT = identifier("event");
 
