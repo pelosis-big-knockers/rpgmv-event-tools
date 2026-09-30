@@ -14,17 +14,19 @@
 		"build": "tsc -b && npm run build -w packages/vscode",
 		"watch": "concurrently -n tsc,esbuild \"tsc -b -w --preserveWatchOutput\" \"npm run watch -w packages/vscode\"",
 		"clean": "tsc -b --clean && npm run clean -w packages/vscode",
-		"typecheck": "tsc -b && tsc -p packages/core/tsconfig.test.json",
+		"typecheck": "tsc -b && tsc -p packages/core/tsconfig.test.json && tsc -p packages/vscode/tsconfig.test.json",
 		"lint": "oxlint --deny-warnings",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"package": "npm run package -w packages/vscode",
 		"test": "vitest run",
-		"test:watch": "vitest"
+		"test:watch": "vitest",
+		"test:extension": "npm run test:extension -w packages/vscode"
 	},
 	"devDependencies": {
 		"@types/node": "^22.20.4",
 		"@types/vscode": "~1.100.0",
+		"@vscode/test-electron": "^3.1.0",
 		"@vscode/vsce": "^4.0.0",
 		"concurrently": "^10.0.5",
 		"esbuild": "^0.28.2",
