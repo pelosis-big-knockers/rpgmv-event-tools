@@ -134,7 +134,7 @@ async function fixtureDocuments(project: MvProject) {
 		),
 		map: decompileDocument(
 			map.events.flatMap((event, id) =>
-				event ? [{ kind: "mapEvent" as const, mapId: 1, id, event }] : [],
+				event ? [{ kind: "mapEvent" as const, mapId: 1, id, event, mapEvents: map.events }] : [],
 			),
 			symbols,
 		),
@@ -275,7 +275,7 @@ describe("decompileDocument layout", () => {
 				"\t\tswitch: switches.Gate_open,",
 				"\t},",
 				"\t() => {",
-				"\t\tcommand(230, [60]);",
+				"\t\twait(60);",
 				"\t},",
 				");",
 				"",
@@ -529,9 +529,9 @@ describe("decompile", () => {
 	it("prints one list's statements without a container", () => {
 		const location: ListLocation = { kind: "commonEvent", commonEventId: 1 };
 		const script = decompile({ location, list: [cmd(230, 0, [60]), END] }, context);
-		expect(script.text).toBe("command(230, [60]);\n");
+		expect(script.text).toBe("wait(60);\n");
 		expect(script.sourceMap.linesOf(location, 0)).toEqual({ startLine: 0, endLine: 0 });
-		expect(script.coverage).toEqual({ commands: 2, rawByCode: new Map([[230, 1]]) });
+		expect(script.coverage).toEqual({ commands: 2, rawByCode: new Map() });
 	});
 });
 
@@ -591,7 +591,7 @@ describeWithGame("decompileDocument on the configured test game", (game) => {
 				documents.push({
 					name: `Map${mapId}`,
 					containers: map.events.flatMap((event, id) =>
-						event ? [{ kind: "mapEvent" as const, mapId, id, event }] : [],
+						event ? [{ kind: "mapEvent" as const, mapId, id, event, mapEvents: map.events }] : [],
 					),
 				});
 			}

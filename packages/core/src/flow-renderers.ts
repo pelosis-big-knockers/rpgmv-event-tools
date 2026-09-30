@@ -30,7 +30,7 @@ import {
 	arrowBlock,
 	type Expr,
 } from "./script-docs.js";
-import { EVENT, character, nameOf, troopMember } from "./script-terms.js";
+import { EVENT, nameOf, troopMember } from "./script-terms.js";
 
 const SELF_SWITCHES = ["A", "B", "C", "D"];
 /** Control Variables operations, as assignment operators and as range methods. */
@@ -172,7 +172,7 @@ function condition(p: readonly unknown[], context: RenderContext): Expr | undefi
 		}
 		case 6: {
 			const direction = nameOf(DIRECTIONS, b);
-			const target = length === 3 && direction ? character(a, () => context.useEvent()) : undefined;
+			const target = length === 3 && direction ? context.character(a) : undefined;
 			return target && binary(member(target, "direction"), "===", scriptString(direction ?? ""));
 		}
 		case 7: {
@@ -284,7 +284,7 @@ function gameData(type: unknown, a: unknown, b: unknown, context: RenderContext)
 		}
 		case 5: {
 			const value = named(CHARACTER_DATA);
-			const target = value ? character(a, () => context.useEvent()) : undefined;
+			const target = value ? context.character(a) : undefined;
 			return target && value ? member(target, value) : undefined;
 		}
 		case 6:

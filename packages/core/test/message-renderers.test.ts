@@ -310,7 +310,7 @@ describe("comments", () => {
 				"//",
 				"",
 				"// second comment",
-				"command(230, [60]);",
+				"wait(60);",
 				'comment("trailing space ", "ok");',
 				"if (switches.Door_open) {",
 				"\t// only one",
@@ -325,8 +325,7 @@ describe("comments", () => {
 				String.raw`// \c[2] ends with ` + "\\",
 			].join("\n"),
 		);
-		expect(script.coverage.rawByCode.get(230)).toBe(1);
-		expect(script.coverage.rawByCode.size).toBe(1);
+		expect(script.coverage.rawByCode.size).toBe(0);
 		await expectPrettierStable(script);
 	});
 

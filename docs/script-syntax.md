@@ -703,7 +703,7 @@ Finalized in #41.
 | timer       | `timer.seconds >= 60`, `timer.seconds <= 60`                                                                                                                                                                 |
 | actor       | `party.has(actors.X)`, `actors.X.name === "…"`, `actors.X.class === classes.Y`, `actors.X.hasSkill(skills.Y)`, `actors.X.hasWeapon(weapons.Y)`, `actors.X.hasArmor(armors.Y)`, `actors.X.hasState(states.Y)` |
 | enemy       | `troop.members[0].appeared`, `troop.members[0].hasState(states.Y)`                                                                                                                                           |
-| character   | `player.direction === "up"`, `map.events[4].direction === "left"` (directions `"down"`, `"left"`, `"right"`, `"up"`)                                                                                         |
+| character   | `player.direction === "up"`, `map.events.Gate.direction === "left"` (directions `"down"`, `"left"`, `"right"`, `"up"`)                                                                                       |
 | gold        | `party.gold >= 100`, `party.gold <= 100`, `party.gold < 100`                                                                                                                                                 |
 | item        | `party.has(items.X)`                                                                                                                                                                                         |
 | weapon      | `party.has(weapons.X)`, `party.has(weapons.X, { includeEquipment: true })`                                                                                                                                   |
@@ -720,7 +720,7 @@ Finalized in #41.
 | item, weapon, armor | `party.count(items.X)` (how many the party has)                                                                                                                      |
 | actor               | `actors.X.level`, `.exp`, `.hp`, `.mp`, `.maxHp`, `.maxMp`, `.attack`, `.defense`, `.magicAttack`, `.magicDefense`, `.agility`, `.luck`                              |
 | enemy               | `troop.members[0].hp`, `.mp`, `.maxHp`, `.maxMp`, `.attack`, … (as for actors, without level and EXP)                                                                |
-| character           | `player.x`, `event.y`, `map.events[4].direction`, `.screenX`, `.screenY`                                                                                             |
+| character           | `player.x`, `event.y`, `map.events.Gate.direction`, `.screenX`, `.screenY`                                                                                           |
 | party               | `party.members[0]` (the actor id of the first member)                                                                                                                |
 | other               | `game.mapId`, `party.size`, `party.gold`, `party.steps`, `game.playTime`, `timer.seconds`, `game.saveCount`, `game.battleCount`, `game.winCount`, `game.escapeCount` |
 
@@ -751,8 +751,8 @@ type in the test game):
   weapon and armor counts, party members, other values). The editor writes `0` there (every case
   in the test game), and the syntax prints only that; any other value uses the raw fallback.
 - **`timer.stop()`** stands for `[1, 0]`. Other stored values of a stop use the raw fallback.
-- **Characters** are `player`, `event` or `map.events[id]` here. Event names follow with the
-  per-map names of [5.5](#55-characters) in #43.
+- **Characters** are `player`, `event` or another map event ([5.5](#55-characters)): by name in a
+  map event's script (`map.events.Gate`), and by id in common events and troops (`map.events[4]`).
 - **Exact shapes only.** A command prints with this syntax only when its parameter count and
   types are exactly the ones above (`includeEquipment` a boolean, texts without line breaks, and
   so on). Anything else uses the raw fallback.
@@ -884,34 +884,57 @@ writes `String(n)` back.)
 
 ### 8.3 Movement, characters, screen, audio and pictures
 
-**Outline** (#43 finalizes).
+Finalized in #43.
 
-| Code(s)          | Command              | Script                                                                                                  |
-| ---------------- | -------------------- | ------------------------------------------------------------------------------------------------------- |
-| 205 + 505        | Set Movement Route   | route builder (see below)                                                                               |
-| 201              | Transfer Player      | `transferPlayer(maps.Forest, 10, 5, { direction: "up", fade: "white" });`                               |
-| 202              | Set Vehicle Location | `setVehicleLocation("boat", maps.Harbor, 4, 9);`                                                        |
-| 203              | Set Event Location   | `setEventLocation(character, 3, 4, { direction: "down" });`, or `{ swapWith: character }`               |
-| 204              | Scroll Map           | `scrollMap("up", 5, { speed: 4 });`                                                                     |
-| 206              | Get on/off Vehicle   | `getOnOffVehicle();`                                                                                    |
-| 211              | Change Transparency  | `changeTransparency(true);` (true: the player is invisible)                                             |
-| 212              | Show Animation       | `showAnimation(character, animations.Slash, { wait: true });`                                           |
-| 213              | Show Balloon Icon    | `showBalloonIcon(character, "exclamation", { wait: true });`                                            |
-| 214              | Erase Event          | `eraseEvent();`                                                                                         |
-| 216, 217         | Followers            | `changePlayerFollowers(false);`, `gatherFollowers();`                                                   |
-| 230              | Wait                 | `wait(60);` (frames; 60 is one second)                                                                  |
-| 221, 222         | Fade screen          | `fadeoutScreen();`, `fadeinScreen();`                                                                   |
-| 223              | Tint Screen          | `tintScreen([-68, -68, 0, 68], 60, { wait: true });` (red, green, blue, gray)                           |
-| 224              | Flash Screen         | `flashScreen([255, 255, 255, 170], 8, { wait: true });` (red, green, blue, strength)                    |
-| 225              | Shake Screen         | `shakeScreen(5, 5, 30, { wait: true });` (power, speed, frames)                                         |
-| 236              | Set Weather Effect   | `setWeatherEffect("rain", 5, 60, { wait: true });`                                                      |
-| 241–246, 249–251 | Audio                | `playBgm("Town1", { volume: 80 });`, `fadeoutBgm(3);`, `saveBgm();`, `playSe("Door1");`, …              |
-| 261              | Play Movie           | `playMovie("Intro");`                                                                                   |
-| 231–235          | Pictures             | `showPicture(1, "Map_overlay", { x: 0, y: 0, opacity: 200 });`, `movePicture(…)`, `erasePicture(1);`, … |
+| Code(s)   | Command              | Script                                                                                                           |
+| --------- | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 205 + 505 | Set Movement Route   | route builder (see below)                                                                                        |
+| 201       | Transfer Player      | `transferPlayer(maps.Forest, 10, 5, { direction: "up", fade: "white" });`                                        |
+| 202       | Set Vehicle Location | `setVehicleLocation("boat", maps.Harbor, 4, 9);`                                                                 |
+| 203       | Set Event Location   | `setEventLocation(character, 3, 4, { direction: "down" });`, `setEventLocation(character, { swapWith: event });` |
+| 204       | Scroll Map           | `scrollMap("up", 5, { speed: 6 });` (direction, distance)                                                        |
+| 206       | Get on/off Vehicle   | `getOnOffVehicle();`                                                                                             |
+| 211       | Change Transparency  | `changeTransparency(true);` (true: the player is invisible)                                                      |
+| 212       | Show Animation       | `showAnimation(character, animations.Slash, { wait: true });`                                                    |
+| 213       | Show Balloon Icon    | `showBalloonIcon(character, "exclamation", { wait: true });`                                                     |
+| 214       | Erase Event          | `eraseEvent();`                                                                                                  |
+| 216, 217  | Followers            | `changePlayerFollowers(false);` (true: followers are shown), `gatherFollowers();`                                |
+| 230       | Wait                 | `wait(60);` (frames; 60 is one second)                                                                           |
+| 221, 222  | Fade screen          | `fadeoutScreen();`, `fadeinScreen();`                                                                            |
+| 223       | Tint Screen          | `tintScreen([-68, -68, 0, 68], 60, { wait: false });` (red, green, blue, gray; frames)                           |
+| 224       | Flash Screen         | `flashScreen([255, 255, 255, 170], 8);` (red, green, blue, strength; frames)                                     |
+| 225       | Shake Screen         | `shakeScreen(5, 5, 30);` (power, speed, frames)                                                                  |
+| 236       | Set Weather Effect   | `setWeatherEffect("rain", 5, 60);` (type, power, frames)                                                         |
+| 241, 245  | Play BGM, BGS        | `playBgm("Town1", { volume: 80 });`, `playBgs("Rain");`                                                          |
+| 242, 246  | Fadeout BGM, BGS     | `fadeoutBgm(3);`, `fadeoutBgs(3);` (seconds)                                                                     |
+| 243, 244  | Save, Replay BGM     | `saveBgm();`, `replayBgm();`                                                                                     |
+| 249, 250  | Play ME, SE          | `playMe("Fanfare1");`, `playSe("Door1", { volume: 80, pitch: 90, pan: -20 });`                                   |
+| 251       | Stop SE              | `stopSe();`                                                                                                      |
+| 261       | Play Movie           | `playMovie("Intro");`                                                                                            |
+| 231       | Show Picture         | `showPicture(1, "Overlay", 0, 0, { opacity: 200 });` (id, file, x, y)                                            |
+| 232       | Move Picture         | `movePicture(1, 408, 312, 60, { opacity: 0, wait: false });` (id, x, y, frames)                                  |
+| 233       | Rotate Picture       | `rotatePicture(1, -5);` (id, speed)                                                                              |
+| 234       | Tint Picture         | `tintPicture(1, [0, 0, 0, 255], 60);` (id, tone, frames)                                                         |
+| 235       | Erase Picture        | `erasePicture(1);`                                                                                               |
 
-Audio defaults (left out): `volume: 90`, `pitch: 100`, `pan: 0`. Movement arguments follow
-[5.6](#56-values-from-variables): `transferPlayer(maps[variables.To_map], variables.To_x,
-variables.To_y)` uses variables.
+**Options and their defaults** (the MV editor's), left out when they have that value:
+
+| Command(s)                                                     | Options                                                                                                                                                                          |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Transfer Player                                                | `direction: "retain"` (left out; `"down"`, `"left"`, `"right"`, `"up"`), `fade: "black"` (`"white"`, `"none"`)                                                                   |
+| Set Event Location                                             | `direction` as for Transfer Player                                                                                                                                               |
+| Scroll Map                                                     | `speed: 4` (1 slowest to 6 fastest)                                                                                                                                              |
+| Show Animation, Show Balloon Icon                              | `wait: false`                                                                                                                                                                    |
+| Tint, Flash and Shake Screen, Set Weather Effect, Tint Picture | `wait: true`                                                                                                                                                                     |
+| Show Picture, Move Picture                                     | `origin: "upperLeft"` (`"center"`), `scaleX: 100`, `scaleY: 100`, `opacity: 255`, `blendMode: "normal"` (`"additive"`, `"multiply"`, `"screen"`); Move Picture also `wait: true` |
+| Play BGM, BGS, ME, SE                                          | `volume: 90`, `pitch: 100`, `pan: 0`                                                                                                                                             |
+
+**Values from variables** ([5.6](#56-values-from-variables)). Transfer Player, Set Vehicle
+Location, Set Event Location and the picture positions take a position either directly or from
+variables. The variables form writes the references: `transferPlayer(maps[variables.To_map],
+variables.To_x, variables.To_y)`, `setEventLocation(event, variables.X, variables.Y)`,
+`showPicture(1, "Fog", variables.X, variables.Y)`. The compiler derives the designation from
+the form.
 
 **Move routes.** A route is a builder ([7.5](#75-builders-routes-and-shop-goods)): each step is a
 method named by its move-command catalog name (`MOVE_ROUTE_COMMANDS`):
@@ -922,18 +945,50 @@ setMovementRoute(player, { skippable: true })
 	.moveUp()
 	.moveUp({ indent: 0 })
 	.wait(15)
-	.playSe("Knock")
+	.playSe("Knock", { volume: 80 })
 	.script("this.setOpacity(128)");
 ```
 
 - Options and defaults (the MV editor's): `repeat: false`, `skippable: false`, `wait: true`.
 - A route with no steps is just the call: `setMovementRoute(player);`.
+- Steps take the arguments of the catalog: `jump(x, y)`, `wait(frames)`,
+  `switchOn(switches.X)`, `switchOff(switches.X)`, `changeSpeed(1–6)`, `changeFrequency(1–5)`,
+  `changeImage("Actor1", index)`, `changeOpacity(0–255)`, `changeBlendMode("additive")`,
+  `playSe("Knock", { volume, pitch, pan })` (defaults as for Play SE), `script("…")`. The other
+  39 steps take no arguments (`moveDown()`, `turnTowardPlayer()`, `throughOn()`, …).
 - The `505` lines after a `205` are copies of the steps, and the route's final `{ "code": 0 }`
   is its terminator. Both are derived.
 - **Step indents.** Steps store `indent: null`, and nothing reads a step's indent. But 3,369 steps
   in the test game store `indent: 0`: an editor artifact spread over 17 step codes, mostly
   mid-route, with 1,030 routes mixing `0` and `null`. So it is kept per step, as the option
-  `{ indent: 0 }` on that step.
+  `{ indent: 0 }` on that step (for Play SE, in the same object as the audio options:
+  `.playSe("Knock", { volume: 80, indent: 0 })`).
+- **Layout** follows Prettier's member chains: a route with one step stays on one line with its
+  call (only arguments break), and a route with two or more is on one line when it fits and
+  otherwise one step per line.
+
+**Details.**
+
+- **Characters** are `player`, `event` and `map.events.Name`, with per-map names in a map event's
+  script ([5.5](#55-characters)). The printer needs the map's events for that (the map event
+  container's `mapEvents`); without them, and in common events and troops, it uses the id form.
+  This applies to the characters of [8.1](#81-flow-control-and-game-state) too.
+- **Enum values** without a name print as numbers ([5.7](#57-enumerations-and-options)), such as
+  the user-defined balloons 11–15: `showBalloonIcon(player, 12)`.
+- **Swapping places** (Set Event Location's "exchange") reads only the other character. The editor
+  stores `0` for the unused y; any other y uses the raw fallback. Its direction still applies.
+- **Move Picture** stores an unused second parameter, which the editor writes as `0`; any other
+  value uses the raw fallback.
+- **Audio** is `{ name, volume, pitch, pan }` in that key order. Other keys or orders use the raw
+  fallback. An empty name is MV's "(None)": `playBgm("")` stops the BGM.
+- **Routes** print only when the route object has exactly the keys `list`, `repeat`,
+  `skippable`, `wait` (in that order, with booleans), its list ends with exactly `{ "code": 0 }`,
+  every step is `{ code, indent }` (steps without parameters) or `{ code, parameters, indent }`
+  with the catalog's parameters, and there is one `505` per step whose parameter is exactly the
+  step (same keys, order and values). Everything else uses the raw fallback. In the test game,
+  all 12,150 routes print as builders.
+- **Exact shapes only**, as in [8.1](#81-flow-control-and-game-state): parameter counts and types
+  must be the ones above, and numbers must print as themselves (not `-0`).
 
 ### 8.4 Battle and remaining commands
 
