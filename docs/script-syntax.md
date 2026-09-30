@@ -836,9 +836,8 @@ showChoices(
 always printed. **Select Item** takes the variable that receives the item's id and the item type:
 `"regularItem"`, `"keyItem"`, `"hiddenItemA"` or `"hiddenItemB"` (`1` to `4`), always printed.
 
-**Show Scrolling Text** takes its options and lines like Show Text. `speed` is always printed;
-`noFastForward: true` is printed when set (default `false`). The editor's default speed isn't
-certain from the data (the test game's one scrolling text uses speed 1), so it is never left out.
+**Show Scrolling Text** takes its options and lines like Show Text. The editor's defaults are
+left out: `speed: 2` and `noFastForward: false`.
 
 **Script.** Each line of JavaScript (the `355`, then each `655`) is one string, laid out like
 Show Text. Editor support for the embedded JavaScript is #7.

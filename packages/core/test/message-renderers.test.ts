@@ -257,7 +257,7 @@ describe("input number, select item and scrolling text", () => {
 				"inputNumber(variables.Code, 4);",
 				'selectItem(variables.Chosen, "keyItem");',
 				'selectItem(variables[9], "hiddenItemB");',
-				'showScrollingText({ speed: 2 }, "Long ago...", "");',
+				'showScrollingText("Long ago...", "");',
 				"showScrollingText({ speed: 4, noFastForward: true });",
 			].join("\n"),
 		);

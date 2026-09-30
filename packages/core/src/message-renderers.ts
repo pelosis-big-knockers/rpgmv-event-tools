@@ -261,7 +261,8 @@ const showScrollingText: CommandRenderer = (node, context) => {
 		return undefined;
 	}
 	const opts = options([
-		["speed", numberLiteral(speed)],
+		// The editor's default speed is 2.
+		["speed", speed === 2 ? undefined : numberLiteral(speed)],
 		["noFastForward", noFastForward ? booleanLiteral(true) : undefined],
 	]);
 	return linesCall("showScrollingText", opts, lines);
