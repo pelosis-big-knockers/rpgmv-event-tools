@@ -4,3 +4,7 @@
 
 - Detect RPG Maker MV projects in the workspace and log a summary of each to the
   **RPG Maker MV** output channel.
+- Load every MV project in the workspace, following workspace folders as they are added and
+  removed.
+- Show a common event, map event or troop as a read-only script document (`rpgmv:` URIs), opened
+  with the `rpgmvEventTools.openContainer` command, which can also scroll to a page.

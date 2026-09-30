@@ -56,6 +56,11 @@ jobs:
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm test
 
+      # Runs in a downloaded VS Code; Linux has no display, so it runs under a virtual one.
+      - name: Extension smoke test
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: ${{ runner.os == 'Linux' && 'xvfb-run -a ' || '' }}npm run test:extension
+
       - name: Package extension
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run package

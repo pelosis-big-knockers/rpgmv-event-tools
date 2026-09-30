@@ -3,6 +3,7 @@ node_modules/
 out/
 dist/
 *.vsix
+.vscode-test/
 coverage/
 
 # Game data must never be committed. Point tests at a local copy via config instead.

@@ -1,0 +1,11 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"composite": false,
+		// Tests import core's source (as Vitest's alias does), and its test support.
+		"paths": { "@rpgmv-event-tools/core": ["../core/src/index.ts"] },
+		"allowImportingTsExtensions": true
+	},
+	"include": ["src", "test"],
+	"references": []
+}

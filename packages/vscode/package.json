@@ -32,16 +32,35 @@
 	},
 	"main": "./dist/extension.js",
 	"activationEvents": [
-		"workspaceContains:**/data/System.json"
+		"workspaceContains:**/data/System.json",
+		"onFileSystem:rpgmv"
 	],
-	"contributes": {},
+	"contributes": {
+		"commands": [
+			{
+				"command": "rpgmvEventTools.openContainer",
+				"title": "Open Event Script",
+				"category": "RPG Maker MV"
+			}
+		],
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "rpgmvEventTools.openContainer",
+					"when": "false"
+				}
+			]
+		}
+	},
 	"scripts": {
 		"build": "node esbuild.mjs",
 		"watch": "node esbuild.mjs --watch",
 		"clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
 		"vscode:prepublish": "npm run clean && node esbuild.mjs --production",
 		"prepackage": "node -e \"require('node:fs').copyFileSync('../../LICENSE', 'LICENSE')\"",
-		"package": "vsce package --no-dependencies"
+		"package": "vsce package --no-dependencies",
+		"pretest:extension": "npm run build && esbuild test/extension/suite.ts --bundle --platform=node --format=cjs --target=node22 --external:vscode --alias:@rpgmv-event-tools/core=../core/src/index.ts --outfile=out/test/suite.js --log-level=warning",
+		"test:extension": "node test/extension/run.mjs"
 	},
 	"dependencies": {
 		"@rpgmv-event-tools/core": "*"
