@@ -1,6 +1,7 @@
 import type { EventCommand } from "./commands.js";
 import { FLOW_RENDERERS } from "./flow-renderers.js";
 import type { Doc } from "./layout.js";
+import { MESSAGE_RENDERERS } from "./message-renderers.js";
 import type { BlockNode, CommandNode, StructureNode } from "./structure.js";
 import type { MvSymbols } from "./symbols.js";
 
@@ -50,6 +51,7 @@ export type CommandRenderer = (
  * The built-in renderers, by command code. Commands without one print with the raw fallback,
  * `command(code, [parameters])`. Each command group adds its renderers here.
  */
-export const RENDERERS: ReadonlyMap<number, CommandRenderer> = new Map<number, CommandRenderer>(
-	FLOW_RENDERERS,
-);
+export const RENDERERS: ReadonlyMap<number, CommandRenderer> = new Map<number, CommandRenderer>([
+	...FLOW_RENDERERS,
+	...MESSAGE_RENDERERS,
+]);

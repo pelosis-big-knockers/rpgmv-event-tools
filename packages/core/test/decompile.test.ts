@@ -159,27 +159,25 @@ describe("decompileDocument on the fixture", () => {
 				'defineCommonEvent({ id: 1, name: "Toggle lantern", trigger: "none" }, () => {',
 				'\tif (switches["Lantern lit"]) {',
 				'\t\tswitches["Lantern lit"] = false;',
-				'\t\tcommand(101, ["", 0, 0, 2]);',
-				'\t\tcommand(401, ["You put out the lantern."]);',
+				'\t\tshowText("You put out the lantern.");',
 				"\t} else {",
 				'\t\tswitches["Lantern lit"] = true;',
-				'\t\tcommand(101, ["", 0, 0, 2]);',
-				'\t\tcommand(401, ["You light the lantern."]);',
+				'\t\tshowText("You light the lantern.");',
 				"\t}",
 				"});",
 				"",
 				'defineCommonEvent({ id: 2, name: "Greet keeper", trigger: "none" }, () => {',
-				'\tcommand(101, ["", 0, 0, 2]);',
-				'\tcommand(401, ["Welcome, traveller."]);',
-				'\tcommand(102, [["Ask about the door", "Leave"], 1, 0, 2, 0]);',
-				'\tcommand(402, [0, "Ask about the door"]);',
-				'\tcommand(101, ["", 0, 0, 2], { indent: 1 });',
-				'\tcommand(401, ["The door opens for those who carry a light."], { indent: 1 });',
-				"\tcommand(121, [3, 3, 0], { indent: 1 });",
-				"\tcommand(0, [], { indent: 1 });",
-				'\tcommand(402, [1, "Leave"]);',
-				"\tcommand(0, [], { indent: 1 });",
-				"\tcommand(404, []);",
+				'\tshowText("Welcome, traveller.");',
+				"\tshowChoices(",
+				"\t\t[",
+				'\t\t\tchoice("Ask about the door", () => {',
+				'\t\t\t\tshowText("The door opens for those who carry a light.");',
+				'\t\t\t\tswitches["Met the keeper"] = true;',
+				"\t\t\t}),",
+				'\t\t\tchoice("Leave", () => {}),',
+				"\t\t],",
+				"\t\t{ cancel: 1 },",
+				"\t);",
 				"});",
 				"",
 				'defineCommonEvent({ id: 3, name: "Count visit", trigger: "none" }, () => {',
@@ -198,8 +196,7 @@ describe("decompileDocument on the fixture", () => {
 				'\t\tcommonEvents["Greet keeper"]();',
 				"\t}),",
 				'\tpage({ trigger: "action", when: () => switches["Met the keeper"] }, () => {',
-				'\t\tcommand(101, ["", 0, 0, 2]);',
-				'\t\tcommand(401, ["Go on, the door is open."]);',
+				'\t\tshowText("Go on, the door is open.");',
 				"\t}),",
 				"]);",
 				"",
@@ -211,8 +208,7 @@ describe("decompileDocument on the fixture", () => {
 				"",
 				'defineTroop({ id: 1, name: "Cellar Bats" }, [',
 				'\tpage({ span: "battle", when: () => troop.turn(1) }, () => {',
-				'\t\tcommand(101, ["", 0, 0, 2]);',
-				'\t\tcommand(401, ["More bats pour out of the dark!"]);',
+				'\t\tshowText("More bats pour out of the dark!");',
 				"\t\tcommand(335, [1]);",
 				"\t}),",
 				'\tpage({ span: "battle" }, () => {}),',
@@ -244,11 +240,12 @@ describe("decompileDocument on the fixture", () => {
 			kind: "commands",
 			location: page(1),
 			start: 0,
-			end: 1,
+			end: 2,
 		});
-		expect(map.sourceMap.linesOf(page(1), 1)).toEqual({ startLine: 8, endLine: 8 });
+		// The Show Text's line is part of its statement.
+		expect(map.sourceMap.linesOf(page(1), 1)).toEqual({ startLine: 7, endLine: 7 });
 		// The list's final `0` is the closing line of its body.
-		expect(map.sourceMap.linesOf(page(1), 2)).toEqual({ startLine: 9, endLine: 9 });
+		expect(map.sourceMap.linesOf(page(1), 2)).toEqual({ startLine: 8, endLine: 8 });
 		expect(map.sourceMap.linesOf(page(1), 3)).toBeUndefined();
 		expect(map.sourceMap.linesOf(page(5), 0)).toBeUndefined();
 	});
@@ -640,12 +637,12 @@ describeWithGame("decompileDocument on the configured test game", (game) => {
 			expect(coverage.commands).toBe([...lists.values()].reduce((sum, length) => sum + length, 0));
 			expect(problems.slice(0, 10)).toEqual([]);
 
-			// Prettier agrees with the layout: formatting changes nothing.
-			for (const index of [0, 1, 2, 3, 4]) {
-				const script = scripts[index];
-				if (script) {
-					await expectPrettierStable(script);
-				}
+			// Prettier agrees with the layout: formatting changes nothing. Raw strings with text codes
+			// aren't valid TypeScript (`\x`, a trailing `\`), so each backslash in the data becomes
+			// another one-column character first.
+			for (const { containers } of documents.slice(0, 5)) {
+				const swapped = JSON.stringify(containers).replaceAll("\\\\", "§");
+				await expectPrettierStable(decompileDocument(JSON.parse(swapped), symbols));
 			}
 		},
 	);
