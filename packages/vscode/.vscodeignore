@@ -2,6 +2,7 @@
 **
 !dist/extension.js
 !images/icon.png
+!images/activity-bar.svg
 !README.md
 !CHANGELOG.md
 !LICENSE

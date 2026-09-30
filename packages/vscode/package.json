@@ -51,6 +51,40 @@
 				}
 			]
 		},
+		"configuration": {
+			"title": "RPG Maker MV Event Tools",
+			"properties": {
+				"rpgmvEventTools.showEmptyEntries": {
+					"type": "boolean",
+					"default": false,
+					"markdownDescription": "Show empty slots in the explorer: common events and troops with no name and no commands. Map events are always shown."
+				}
+			}
+		},
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "rpgmvEventTools",
+					"title": "RPG Maker MV",
+					"icon": "images/activity-bar.svg"
+				}
+			]
+		},
+		"views": {
+			"rpgmvEventTools": [
+				{
+					"id": "rpgmvEventTools.explorer",
+					"name": "Events",
+					"icon": "images/activity-bar.svg"
+				}
+			]
+		},
+		"viewsWelcome": [
+			{
+				"view": "rpgmvEventTools.explorer",
+				"contents": "No RPG Maker MV project was found in this workspace. Open a game's folder: the one with data/System.json, or www/data/System.json in a deployed game."
+			}
+		],
 		"languages": [
 			{
 				"id": "rpgmv-script",
