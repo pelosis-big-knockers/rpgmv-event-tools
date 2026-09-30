@@ -1,0 +1,9 @@
+/// <reference types="rpgmv-event-tools" />
+
+defineTroop({ id: 1, name: "Cellar Bats" }, [
+	page({ span: "battle", when: () => troop.turn(1) }, () => {
+		showText("More bats pour out of the dark!");
+		enemyAppear(troop.members[1]);
+	}),
+	page({ span: "battle" }, () => {}),
+]);

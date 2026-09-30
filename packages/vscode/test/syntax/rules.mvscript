@@ -1,0 +1,61 @@
+/// <reference types="rpgmv-event-tools" />
+
+// Hand-written cases for each rule of the grammar. Scripts are one line per string.
+
+defineCommonEvent({ id: 1, name: "Raw strings", trigger: "none" }, () => {
+	// A backslash never escapes: each string ends at its first matching quote.
+	showText("C:\");
+	showText('Wait...\');
+	showText(`Done\`);
+	showText("\\");
+	showText("Ends\", "next");
+	showText('She said "hi".');
+	showText(`"It's late," he said.`);
+	showText(`"It's` + "`" + `" too.`);
+	showText(`${variables.Day} is not a template`);
+	showText("no // comment here");
+});
+
+defineCommonEvent({ id: 2, name: "Text codes", trigger: "none" }, () => {
+	showText("\C[2]Mira\C[0] has \V[12] \G, or \Gold: \N[1], \n[1], \P[1], \I[64], \v[03].");
+	showText("\{Big\} \. \| \! \> fast \< \^ \$ \\ literal");
+	showText("Plugin \fs[20] \msgposx[a] \C[x] \C \Cx[2] \V[] \# \_ \~ \[");
+	showText("Stray \1 \ space, and at the end \");
+	showText('Single \C[3]quoted\C[0]', `backtick \N[2]`);
+	comment("Codes in \C[2]any\C[0] raw string");
+});
+
+defineCommonEvent({ id: 3, name: "Embedded JavaScript", trigger: "none" }, () => {
+	script("$gameVariables.setValue(1, 'ok');", "if ($gameSwitches.value(2)) {", "}");
+	script('$gameMessage.add("She said \"hi\"");');
+	script(`$gameMessage.add("It's " + 'late');`);
+	script("var path = 'C:\\';", "var open = '", "var slash = 'end\");
+	script("/* unclosed comment", "$gamePlayer.x;");
+	script(
+		"const s = `template ${1 + 2}`;",
+		"$gameParty.gainGold(100);",
+	);
+	if (script("$gameParty.size() > 2")) {
+		variables.Day = script("Math.floor(Math.random() * 3)");
+	}
+	setMovementRoute(player, { skippable: true })
+		.turnUp()
+		.script("this.setOpacity(128)")
+		.script('this._opacity = "x"');
+	setMovementRoute(event).moveUp().script("this.jump(0, 0)");
+	plugin.script("not", "JavaScript \C[2]");
+	commonEvents.script();
+	showText('script("not a call")');
+});
+
+defineCommonEvent({ id: 4, name: "Raw fallback", trigger: "none" }, () => {
+	command(232, [1, 0, 0, 0, 408, 312, 100, 100, 255, 0, 60, true]);
+	command(401, ["\\c[2]Escaped\"", 'it\'s'], { indent: 3 });
+	command({ code: 108, indent: 0, parameters: ["…"], extra: 1 });
+	plugin.command("raw", "\C[2]");
+	showText("command(1, [])");
+});
+
+// A string with no closing quote runs to the end of its line.
+showText("unterminated
+);
