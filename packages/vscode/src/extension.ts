@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { watchDataFiles } from "./data-watcher.js";
 import { ExplorerTree } from "./explorer-tree.js";
 import { EXPLORER_VIEW, ExplorerProvider, SHOW_EMPTY_ENTRIES_SETTING } from "./explorer-view.js";
 import { ProjectSession } from "./project-session.js";
@@ -23,6 +24,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
 		new ExplorerTree(session, { showEmptyEntries: showEmptyEntries() }),
 		OPEN_CONTAINER_COMMAND,
 	);
+	const documentChanged = new vscode.EventEmitter<vscode.Uri>();
 	const addFolders = (folders: readonly vscode.WorkspaceFolder[]) => {
 		// The tree shows a folder's projects once they've loaded.
 		void Promise.all(scanFolders(session, folders)).then(() => explorer.refresh());
@@ -47,7 +49,10 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
 			}
 			addFolders(event.added);
 		}),
+		documentChanged,
+		watchDataFiles({ session, documents, explorer, documentChanged, log }),
 		vscode.workspace.registerTextDocumentContentProvider(SCRIPT_SCHEME, {
+			onDidChange: documentChanged.event,
 			async provideTextDocumentContent(uri) {
 				return (await documents.get(addressOf(uri))).text;
 			},

@@ -23,6 +23,8 @@ export class ExplorerProvider implements vscode.TreeDataProvider<ExplorerNode>, 
 	readonly #openCommand: string;
 	readonly #onDidChangeTreeData = new vscode.EventEmitter<ExplorerNode | undefined>();
 	readonly onDidChangeTreeData = this.#onDidChangeTreeData.event;
+	/** The nodes last given to the view, by id: a refresh must name the node the view was given. */
+	readonly #shown = new Map<string, ExplorerNode>();
 
 	constructor(tree: ExplorerTree, openCommand: string) {
 		this.tree = tree;
@@ -31,11 +33,23 @@ export class ExplorerProvider implements vscode.TreeDataProvider<ExplorerNode>, 
 
 	/** Builds `node`'s children again, or the whole tree without it. */
 	refresh(node?: ExplorerNode): void {
+		if (!node) {
+			this.#shown.clear();
+		}
 		this.#onDidChangeTreeData.fire(node);
 	}
 
-	getChildren(node?: ExplorerNode): Promise<ExplorerNode[]> {
-		return this.tree.children(node);
+	/** The nodes the view has been given, the latest one of each. */
+	get shownNodes(): Iterable<ExplorerNode> {
+		return this.#shown.values();
+	}
+
+	async getChildren(node?: ExplorerNode): Promise<ExplorerNode[]> {
+		const children = await this.tree.children(node);
+		for (const child of children) {
+			this.#shown.set(child.id, child);
+		}
+		return children;
 	}
 
 	getParent(node: ExplorerNode): ExplorerNode | undefined {

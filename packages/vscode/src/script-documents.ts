@@ -1,9 +1,9 @@
 import {
+	ScriptSourceMap,
 	decompileDocument,
 	type ContainerRef,
 	type MvProject,
 	type ScriptContainer,
-	type ScriptSourceMap,
 } from "@rpgmv-event-tools/core";
 import type { ProjectSession } from "./project-session.js";
 import { addressKey, formatScriptPath, sameContainer, type ScriptAddress } from "./script-uri.js";
@@ -105,33 +105,46 @@ export function pageStartLine(
  */
 export class ScriptDocuments {
 	readonly #session: ProjectSession;
-	/** Documents by `addressKey`. */
-	readonly #documents = new Map<string, Promise<ScriptDocument>>();
+	/** Documents by `addressKey`, each with its address. */
+	readonly #documents = new Map<
+		string,
+		{ readonly address: ScriptAddress; readonly document: Promise<ScriptDocument> }
+	>();
 
 	constructor(session: ProjectSession) {
 		this.#session = session;
 	}
 
-	/** The document for `address`, built the first time it's asked for. Rejects if there's none. */
+	/** The document for `address`, built the first time it's asked for. Rejects if the project isn't open. */
 	get(address: ScriptAddress): Promise<ScriptDocument> {
 		const key = addressKey(address);
-		let document = this.#documents.get(key);
-		if (!document) {
-			document = this.#build(address);
-			this.#documents.set(key, document);
+		let entry = this.#documents.get(key);
+		if (!entry) {
+			const kept = { address, document: this.#build(address) };
+			this.#documents.set(key, kept);
 			// A failed build isn't kept, so asking again tries again.
-			document.catch(() => {
-				if (this.#documents.get(key) === document) {
+			kept.document.catch(() => {
+				if (this.#documents.get(key) === kept) {
 					this.#documents.delete(key);
 				}
 			});
+			entry = kept;
 		}
-		return document;
+		return entry.document;
 	}
 
 	/** Drops the kept document for `address`, so the next `get` builds it again. */
 	forget(address: ScriptAddress): void {
 		this.#documents.delete(addressKey(address));
+	}
+
+	/** Drops every kept document whose address passes `test`, for example after its data changed. */
+	forgetWhere(test: (address: ScriptAddress) => boolean): void {
+		for (const [key, entry] of this.#documents) {
+			if (test(entry.address)) {
+				this.#documents.delete(key);
+			}
+		}
 	}
 
 	async #build(address: ScriptAddress): Promise<ScriptDocument> {
@@ -141,7 +154,11 @@ export class ScriptDocuments {
 		}
 		const container = await findContainer(entry.project, address.container);
 		if (!container) {
-			throw new Error(`${describeContainer(address.container)} doesn't exist in "${entry.key}".`);
+			// Shown rather than thrown, since an open document's container can be deleted.
+			return {
+				text: `// ${describeContainer(address.container)} doesn't exist in "${entry.key}". It may have been deleted.\n`,
+				sourceMap: new ScriptSourceMap([]),
+			};
 		}
 		return buildScriptDocument(entry.project, container);
 	}

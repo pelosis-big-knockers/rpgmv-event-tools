@@ -1,4 +1,6 @@
 import * as assert from "node:assert/strict";
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import * as vscode from "vscode";
 import type { ExtensionApi } from "../../src/extension.js";
 
@@ -63,7 +65,40 @@ const tests: [string, () => Promise<void>][] = [
 			assert.equal(editor.selection.active.line, pageLines[1]);
 		},
 	],
+	[
+		"updates an open script and the tree when a data file changes",
+		async () => {
+			const uri = "rpgmv:/basic/common-events/1/Toggle lantern.mvscript";
+			await vscode.commands.executeCommand(OPEN_CONTAINER, uri);
+			const document = activeEditor().document;
+			const folder = vscode.workspace.workspaceFolders?.[0];
+			assert.ok(folder, "no workspace folder");
+			// Written outside VS Code, as the MV editor would. The file watcher may still be
+			// starting, so the file is written again until the change is seen.
+			const file = join(folder.uri.fsPath, "data", "CommonEvents.json");
+			const events = JSON.parse(await readFile(file, "utf8"));
+			events[1].name = "Toggle lamp";
+			const updated = () => document.getText().includes('name: "Toggle lamp"');
+			for (let attempt = 0; attempt < 30 && !updated(); attempt++) {
+				await writeFile(file, JSON.stringify(events));
+				await waitFor(updated, 1000);
+			}
+			assert.ok(updated(), document.getText());
+			const { explorer } = api;
+			const [commonEvents] = await explorer.getChildren();
+			const labels = (await explorer.getChildren(commonEvents)).map((node) => node.label);
+			assert.ok(labels.includes("1 · Toggle lamp"), labels.join(", "));
+		},
+	],
 ];
+
+/** Polls until `done` returns `true` or `ms` milliseconds have passed. */
+async function waitFor(done: () => boolean, ms: number): Promise<void> {
+	const deadline = Date.now() + ms;
+	while (!done() && Date.now() < deadline) {
+		await new Promise((resolve) => setTimeout(resolve, 50));
+	}
+}
 
 export async function run(): Promise<void> {
 	const extension = vscode.extensions.getExtension(EXTENSION_ID);

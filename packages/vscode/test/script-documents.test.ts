@@ -129,14 +129,34 @@ describe("ScriptDocuments", () => {
 		expect(rebuilt.text).toBe(first.text);
 	});
 
-	it("rejects addresses of missing projects and containers", async () => {
+	it("rejects addresses of missing projects", async () => {
 		const documents = await fixtureDocuments();
 		await expect(documents.get({ projectKey: "other", container: TROOP })).rejects.toThrow(
 			'No RPG Maker MV project "other" is open in the workspace.',
 		);
-		await expect(
-			documents.get({ projectKey: "basic", container: { kind: "mapEvent", mapId: 1, eventId: 5 } }),
-		).rejects.toThrow(`Event 5 of map 1 doesn't exist in "basic".`);
+	});
+
+	it("says so in a comment when a container doesn't exist", async () => {
+		const documents = await fixtureDocuments();
+		const { text, sourceMap } = await documents.get({
+			projectKey: "basic",
+			container: { kind: "mapEvent", mapId: 1, eventId: 5 },
+		});
+		expect(text).toBe(`// Event 5 of map 1 doesn't exist in "basic". It may have been deleted.\n`);
+		expect(sourceMap.segments).toEqual([]);
+	});
+
+	it("forgets the documents whose address passes a test", async () => {
+		const documents = await fixtureDocuments();
+		const troop = { projectKey: "basic", container: TROOP };
+		const common = { projectKey: "basic", container: COMMON_EVENT };
+		const [troopDocument, commonDocument] = await Promise.all([
+			documents.get(troop),
+			documents.get(common),
+		]);
+		documents.forgetWhere((address) => address.container.kind === "troop");
+		expect(await documents.get(troop)).not.toBe(troopDocument);
+		expect(await documents.get(common)).toBe(commonDocument);
 	});
 });
 
