@@ -1,7 +1,7 @@
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
@@ -113,16 +113,21 @@ describe("readMvFile and writeMvFile", () => {
 });
 
 describe("fixtures", () => {
-	const dataDir = fileURLToPath(new URL("./fixtures/basic/data", import.meta.url));
+	const fixturesDir = fileURLToPath(new URL("./fixtures", import.meta.url));
+	const files = readdirSync(fixturesDir, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory())
+		.flatMap((entry) =>
+			readdirSync(join(fixturesDir, entry.name, "data"))
+				.filter((name) => name.endsWith(".json"))
+				.map((name) => join(entry.name, "data", name)),
+		);
 
-	it.each(readdirSync(dataDir).filter((name) => name.endsWith(".json")))(
-		"%s round-trips byte for byte",
-		(name) => {
-			const original = readFileSync(join(dataDir, name));
-			const rewritten = Buffer.from(stringifyMvJson(name, parseMvJson(original.toString("utf8"))));
-			expect(rewritten.equals(original)).toBe(true);
-		},
-	);
+	it.each(files)("%s round-trips byte for byte", (file) => {
+		const name = basename(file);
+		const original = readFileSync(join(fixturesDir, file));
+		const rewritten = Buffer.from(stringifyMvJson(name, parseMvJson(original.toString("utf8"))));
+		expect(rewritten.equals(original)).toBe(true);
+	});
 });
 
 describeWithGame("MV JSON round trip on the configured test game", (game) => {
