@@ -1,4 +1,3 @@
-import * as prettier from "prettier";
 import { describe, expect, it } from "vitest";
 import {
 	createNames,
@@ -14,6 +13,7 @@ import {
 	type ListLocation,
 	type ScriptContainer,
 } from "../src/index.js";
+import { expectPrettierStable } from "./support/prettier.js";
 import { describeWithGame } from "./support/test-game.js";
 
 const context: DecompileContext = {
@@ -46,20 +46,6 @@ function body(script: DecompiledScript): string {
 		.slice(3, -2)
 		.map((line) => line.slice(1))
 		.join("\n");
-}
-
-/**
- * Checks that Prettier leaves a script as printed. Raw strings with text codes aren't valid
- * TypeScript (`\x`, a trailing `\`), so backslashes become another one-column character first.
- */
-async function expectPrettierStable(script: DecompiledScript): Promise<void> {
-	const text = script.text.replaceAll("\\", "§");
-	const formatted = await prettier.format(text, {
-		parser: "typescript",
-		useTabs: true,
-		printWidth: 100,
-	});
-	expect(formatted).toBe(text);
 }
 
 /** A command with its continuation lines, each holding one text. */
@@ -383,20 +369,127 @@ describe("comments", () => {
 });
 
 describe("scripts and plugin commands", () => {
-	it("prints script lines", async () => {
+	it("prints one expression as an expression body", async () => {
+		const cases: [string, string][] = [
+			["$gameSystem.disableSave()", "script(() => $gameSystem.disableSave());"],
+			["({ a: 1 })", "script(() => ({ a: 1 }));"],
+			['$gameMessage.add("}")', 'script(() => $gameMessage.add("}"));'],
+			["/a\\/b/.test(x)", "script(() => /a\\/b/.test(x));"],
+			["(function () {})()", "script(() => (function () {})());"],
+			["x = `a ${1 + 2}`", "script(() => x = `a ${1 + 2}`);"],
+		];
+		const script = decompileList(cases.map(([code]) => cmd(355, 0, [code])));
+		expect(body(script)).toBe(cases.map(([, printed]) => printed).join("\n"));
+		expect(script.coverage.rawByCode.size).toBe(0);
+		await expectPrettierStable(script);
+	});
+
+	it("prints other code as a block body, one stored line per line", async () => {
+		const tab = "\t";
 		const script = decompileList([
-			...withLines(cmd(355, 0, ["const a = 1;"]), 655, ["$gameVariables.setValue(1, a);"]),
-			cmd(355, 0, ["this.wait(10);"]),
-			cmd(355, 0, [1]),
+			cmd(355, 0, ["$gameSystem.disableSave();"]),
+			...withLines(cmd(355, 0, ["if ($gameSwitches.value(1)) {"]), 655, [
+				"  $gameMessage.add(`Line one",
+				"line two`);",
+				"",
+				"}  ",
+				"   ",
+				"// done",
+			]),
+			// Not one expression, or not one that reads back as an expression body.
+			cmd(355, 0, ["{ a: 1 }"]),
+			cmd(355, 0, ["a, b"]),
+			cmd(355, 0, ["function f() {}"]),
+			cmd(355, 0, [" a"]),
+			cmd(355, 0, ["a // note"]),
+			cmd(355, 0, [""]),
+			...withLines(cmd(355, 0, ["$gameVariables.setValue(1,"]), 655, ["  2)"]),
 		]);
 		expect(body(script)).toBe(
 			[
-				'script("const a = 1;", "$gameVariables.setValue(1, a);");',
-				'script("this.wait(10);");',
-				"command(355, [1]);",
+				"script(() => {",
+				"\t$gameSystem.disableSave();",
+				"});",
+				"script(() => {",
+				"\tif ($gameSwitches.value(1)) {",
+				"\t  $gameMessage.add(`Line one",
+				"\tline two`);",
+				"",
+				"\t}  ",
+				`${tab}   `,
+				"\t// done",
+				"});",
+				"script(() => {",
+				"\t{ a: 1 }",
+				"});",
+				"script(() => {",
+				"\ta, b",
+				"});",
+				"script(() => {",
+				"\tfunction f() {}",
+				"});",
+				"script(() => {",
+				"\t a",
+				"});",
+				"script(() => {",
+				"\ta // note",
+				"});",
+				"script(() => {",
+				"",
+				"});",
+				"script(() => {",
+				"\t$gameVariables.setValue(1,",
+				"\t  2)",
+				"});",
 			].join("\n"),
 		);
+		expect(script.coverage.rawByCode.size).toBe(0);
 		await expectPrettierStable(script);
+	});
+
+	it("prints code that can't be a lambda as strings", async () => {
+		const separator = String.fromCharCode(0x2028);
+		const script = decompileList([
+			// Code that doesn't parse.
+			cmd(355, 0, ["if ("]),
+			...withLines(cmd(355, 0, ["const a = 1;"]), 655, ["}); script(() => {"]),
+			cmd(355, 0, ["return 1;"]),
+			// Code that parses, but not inside the lambda: a hashbang must start the code.
+			...withLines(cmd(355, 0, ["#!/usr/bin/env node"]), 655, ["a();"]),
+			// A line separator would end the line in some editors.
+			cmd(355, 0, [`var s = "${separator}";`]),
+			cmd(355, 0, [1]),
+			cmd(355, 0, ["a\nb"]),
+		]);
+		expect(body(script)).toBe(
+			[
+				'script("if (");',
+				'script("const a = 1;", "}); script(() => {");',
+				'script("return 1;");',
+				'script("#!/usr/bin/env node", "a();");',
+				`script('var s = "${separator}";');`,
+				"command(355, [1]);",
+				'command(355, ["a\\nb"]);',
+			].join("\n"),
+		);
+	});
+
+	it("maps each script line to its own line", () => {
+		const script = decompileList([
+			...withLines(cmd(355, 0, ["const a = 1;"]), 655, ["", "$gameVariables.setValue(1, a);"]),
+			cmd(355, 0, ["$gameSystem.disableSave()"]),
+			cmd(355, 0, ["this.wait(10);"]),
+		]);
+		const lines = script.text.split("\n");
+		const lineOf = (index: number) => script.sourceMap.linesOf(LOCATION, index);
+		// Line 3 is `script(() => {`, and lines 4 to 6 its lines.
+		expect(lines[3]).toBe("\tscript(() => {");
+		expect([0, 1, 2].map(lineOf)).toEqual(
+			[4, 5, 6].map((line) => ({ startLine: line, endLine: line })),
+		);
+		expect(lineOf(3)).toEqual({ startLine: 8, endLine: 8 });
+		// A single line is the whole command.
+		expect(lineOf(4)).toEqual({ startLine: 9, endLine: 11 });
 	});
 
 	it("splits plugin commands at single spaces", async () => {

@@ -30,7 +30,7 @@ import {
 	arrowBlock,
 	type Expr,
 } from "./script-docs.js";
-import { EVENT, nameOf, troopMember } from "./script-terms.js";
+import { EVENT, nameOf, scriptArgument, troopMember } from "./script-terms.js";
 
 const SELF_SWITCHES = ["A", "B", "C", "D"];
 /** Control Variables operations, as assignment operators and as range methods. */
@@ -122,6 +122,12 @@ function partyCall(method: string, args: readonly Expr[]): Expr {
 	return methodCall(identifier("party"), method, args);
 }
 
+/** `script(() => code)`, or `script("code")` for code that isn't one expression (spec 8.2). */
+function scriptCall(code: unknown): Expr | undefined {
+	const argument = scriptArgument(code);
+	return argument && call("script", [argument]);
+}
+
 function selfSwitch(letter: string, context: RenderContext): Expr {
 	context.useEvent();
 	return member(member(EVENT, "selfSwitches"), letter);
@@ -204,7 +210,7 @@ function condition(p: readonly unknown[], context: RenderContext): Expr | undefi
 				? methodCall(identifier("input"), "isPressed", [scriptString(a)])
 				: undefined;
 		case 12:
-			return length === 2 && isText(a) ? call("script", [scriptString(a)]) : undefined;
+			return length === 2 ? scriptCall(a) : undefined;
 		case 13: {
 			const vehicle = typeof a === "number" ? VEHICLES[a] : undefined;
 			return length === 2 && vehicle
@@ -256,7 +262,7 @@ function variableOperand(p: readonly unknown[], context: RenderContext): Expr | 
 		case 3:
 			return p.length === 7 ? gameData(a, b, c, context) : undefined;
 		case 4:
-			return p.length === 5 && isText(a) ? call("script", [scriptString(a)]) : undefined;
+			return p.length === 5 ? scriptCall(a) : undefined;
 		default:
 			return undefined;
 	}

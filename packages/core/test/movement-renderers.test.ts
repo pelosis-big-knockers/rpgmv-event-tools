@@ -1,4 +1,3 @@
-import * as prettier from "prettier";
 import { describe, expect, it } from "vitest";
 import {
 	MOVE_ROUTE_COMMANDS,
@@ -16,6 +15,7 @@ import {
 	type MapEvent,
 	type ScriptContainer,
 } from "../src/index.js";
+import { expectPrettierStable } from "./support/prettier.js";
 import { describeWithGame } from "./support/test-game.js";
 
 const named = (...names: string[]) => [null, ...names.map((name) => ({ name }))];
@@ -58,15 +58,6 @@ function body(script: DecompiledScript): string {
 		.slice(3, -2)
 		.map((line) => line.slice(1))
 		.join("\n");
-}
-
-async function expectPrettierStable(script: DecompiledScript): Promise<void> {
-	const formatted = await prettier.format(script.text, {
-		parser: "typescript",
-		useTabs: true,
-		printWidth: 100,
-	});
-	expect(formatted).toBe(script.text);
 }
 
 const audio = (name: string, volume = 90, pitch = 100, pan = 0) => ({ name, volume, pitch, pan });
@@ -316,7 +307,7 @@ describe("move routes", () => {
 			42: [[128], "changeOpacity(128)"],
 			43: [[2], 'changeBlendMode("multiply")'],
 			44: [[audio("Knock", 80)], 'playSe("Knock", { volume: 80 })'],
-			45: [["this.setOpacity(128)"], 'script("this.setOpacity(128)")'],
+			45: [["this.setOpacity(128)"], "script(() => this.setOpacity(128))"],
 		};
 		const infos = MOVE_ROUTE_COMMANDS.filter((info) => info.code !== 0);
 		expect(infos).toHaveLength(45);
@@ -361,27 +352,35 @@ describe("move routes", () => {
 	});
 
 	it("follows Prettier's member-chain layout", async () => {
-		const long = "this.setOpacity(this.opacity() - 10); this.setBlendMode(1); this.jump(0, 0)";
+		// Scripts ending in `;` aren't one expression, so they stay strings.
+		const long = "this.setOpacity(this.opacity() - 10); this.setBlendMode(1); this.jump(0, 0);";
 		const script = decompileList([
 			// One step: the chain stays together, and only the arguments break.
 			...route(-1, [step(45, [long + long])], { repeat: true, skippable: true, wait: false }),
 			// Two steps that fit on one line, and two that don't.
-			...route(-1, [step(45, ["a"]), step(45, ["b"])]),
-			...route(-1, [step(45, [long]), step(45, ["b"])]),
+			...route(-1, [step(45, ["a;"]), step(45, ["b;"])]),
+			...route(-1, [step(45, [long]), step(45, ["b;"])]),
 			// A string split with `+` is not a simple argument, so the chain breaks.
 			...route(-1, [step(45, ["`'\""]), step(1)]),
+			// Nor is a lambda, but a chain with one step stays together.
+			...route(-1, [step(45, ["a"])]),
+			...route(-1, [step(45, ["a"]), step(1)]),
 		]);
 		expect(body(script)).toBe(
 			[
 				"setMovementRoute(player, { repeat: true, skippable: true, wait: false }).script(",
 				`\t"${long + long}",`,
 				");",
-				'setMovementRoute(player).script("a").script("b");',
+				'setMovementRoute(player).script("a;").script("b;");',
 				"setMovementRoute(player)",
 				`\t.script("${long}")`,
-				'\t.script("b");',
+				'\t.script("b;");',
 				"setMovementRoute(player)",
 				"\t.script(\"`'\" + '\"')",
+				"\t.moveDown();",
+				"setMovementRoute(player).script(() => a);",
+				"setMovementRoute(player)",
+				"\t.script(() => a)",
 				"\t.moveDown();",
 			].join("\n"),
 		);

@@ -19,6 +19,7 @@ import {
 	breakParent,
 	canBreak,
 	stringWidth,
+	verbatim,
 	willBreak,
 	type Doc,
 } from "./layout.js";
@@ -462,6 +463,27 @@ export function arrowExpression(parameters: readonly string[], body: Expr): Expr
 		]),
 		type: "ArrowFunctionExpression",
 	};
+}
+
+/**
+ * `() => code`: a lambda whose expression body is one line of JavaScript, printed as stored (see
+ * `isExpressionBody`). The layout treats the body as one unbreakable piece of its width, as
+ * Prettier treats an identifier; the tests' Prettier comparisons put an identifier of the same
+ * width in its place. Prettier doesn't count a function as a simple call argument, so it is
+ * `complex`: a chain of three or more calls with it as an argument always breaks.
+ */
+export function codeLambda(code: string): Expr {
+	const body: Expr = { doc: verbatim(code), type: "Identifier" };
+	return { ...arrowExpression([], body), complex: true };
+}
+
+/**
+ * `() => { … }`: a lambda whose block body is lines of JavaScript, printed as stored (see
+ * `isBlockBody`). Each of `lines` is a {@link verbatim} line (possibly with source-map marks), so
+ * it is printed after the block's indentation, or empty when it is empty.
+ */
+export function codeBlockLambda(lines: readonly Doc[]): Expr {
+	return { ...arrowBlock([], lines), complex: true };
 }
 
 /** A comparison such as `variables.Day >= 3`. */

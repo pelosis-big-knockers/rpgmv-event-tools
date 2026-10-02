@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 import type { IGrammar } from "vscode-textmate";
 
 /**
- * Loads the script grammar the way VS Code does, with the TypeScript and JavaScript grammars it
- * builds on (vendored in `test/grammars`, see the README there).
+ * Loads the script grammar the way VS Code does, with the TypeScript grammar it builds on
+ * (vendored in `test/grammars`, see the README there).
  */
 
 const require = createRequire(import.meta.url);
@@ -16,7 +16,6 @@ const textmate = require("vscode-textmate") as typeof import("vscode-textmate");
 const GRAMMAR_FILES: Record<string, URL> = {
 	"source.rpgmv-script": new URL("../../syntaxes/rpgmv-script.tmLanguage.json", import.meta.url),
 	"source.ts": new URL("../grammars/TypeScript.tmLanguage.json", import.meta.url),
-	"source.js": new URL("../grammars/JavaScript.tmLanguage.json", import.meta.url),
 };
 
 /** One token of a line: its text and its scopes, outermost first. */

@@ -16,3 +16,7 @@
   the script prints them. Clicking an entry opens its script, and clicking a page opens it at
   that page. Empty common event and troop slots are hidden unless
   `rpgmvEventTools.showEmptyEntries` is set.
+- Show JavaScript (Script commands, script conditions and operands, and move-route `script`
+  steps) as lambdas, `script(() => …)`, highlighted as code. The code is kept exactly as stored;
+  code that can't be a lambda stays a `script("…")` string.
+  

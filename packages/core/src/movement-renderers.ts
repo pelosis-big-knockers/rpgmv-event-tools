@@ -24,7 +24,7 @@ import {
 	symbolReference,
 	type Expr,
 } from "./script-docs.js";
-import { audio } from "./script-terms.js";
+import { audio, scriptArgument } from "./script-terms.js";
 
 type Option = readonly [key: string, value: Expr];
 
@@ -519,7 +519,10 @@ const STEP_ARGUMENTS: Readonly<
 		const parsed = p.length === 1 ? audio(p[0]) : undefined;
 		return parsed && { args: [parsed[0]], options: parsed[1] };
 	},
-	45: (p) => (p.length === 1 && isText(p[0]) ? { args: [scriptString(p[0])] } : undefined),
+	45: (p) => {
+		const argument = p.length === 1 ? scriptArgument(p[0]) : undefined;
+		return argument && { args: [argument] };
+	},
 };
 
 function stepNumber(p: readonly unknown[]): StepArguments | undefined {

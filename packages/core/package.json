@@ -13,5 +13,8 @@
 	},
 	"files": [
 		"dist"
-	]
+	],
+	"dependencies": {
+		"acorn": "^8.18.0"
+	}
 }

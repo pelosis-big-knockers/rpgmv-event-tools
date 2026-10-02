@@ -10,18 +10,46 @@ defineCommonEvent({ id: 1, name: "Grammar cases", trigger: "none" }, () => {
 	showText("\fs[20]Plugin codes\fs[0], a stray \ backslash and \\ one.");
 	// A comment keeps \C[2] as is
 	// and "quotes" too
+	script(() => {
+		var name = $gameActors.actor(1).name();
+		$gameMessage.add('Hello, ' + name);
+		$gameVariables.setValue(2, name.length + "!".length);
+		if (name.endsWith('\\')) { $gameMessage.add("It's a \"path\""); }
+
+		var text = `\C[2]one
+		  two ${name})`; // (done
+	});
+	script(() => $gameSystem.disableSave());
 	script(
-		"var name = $gameActors.actor(1).name();",
-		"$gameMessage.add('Hello, ' + name);",
-		'$gameVariables.setValue(2, name.length + "!".length);',
-		`if (name.endsWith('\\')) { $gameMessage.add("It's a path"); }`,
+		() =>
+			$gameVariables.value(1111111111111111111111111111111111111111) + $gameVariables.value(2222222222222222222222222222222222222222),
 	);
-	if (script("$gameParty.size() > 2")) {
-		variables.Visits = script("Math.floor(Math.random() * 3)");
+	script(() => {
+		$gameMessage.add('\\C[2]Not a text code');
+	});
+	script("if (");
+	if (script(() => $gameParty.size() > 2)) {
+		variables.Visits = script(() => Math.floor(Math.random() * 3));
+	}
+	if (script("Input.isPressed('ok');")) {
+	}
+	if (
+		script(
+			() =>
+				$gameVariables.value(1111111111111111111111111111111111111111) + $gameVariables.value(2222222222222222222222222222222222222222) > 0,
+		)
+	) {
+	}
+	if (
+		script(
+			'$gameVariables.value(1111111111111111111111111111111111111111) + $gameVariables.value(2222222222222222222222222222222222222222) > 0 && "\C[2]";',
+		)
+	) {
 	}
 	setMovementRoute(player, { skippable: true })
-		.script("this.setOpacity(128);")
-		.script('this._name = "Mira";');
+		.script(() => this.setOpacity(128))
+		.script(() => this._name = "Mira \"the\" guard")
+		.script("this.jump(0, 0);");
 	plugin.Lighting("on", 3);
 	plugin.script("run", "\C[2]");
 	command(999, ['\\c[2]Raw "text"', 1]);

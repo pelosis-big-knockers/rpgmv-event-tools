@@ -1,5 +1,4 @@
 import { fileURLToPath } from "node:url";
-import * as prettier from "prettier";
 import { describe, expect, it } from "vitest";
 import {
 	createNames,
@@ -13,7 +12,6 @@ import {
 	type CommandRenderer,
 	type CommonEvent,
 	type DecompileContext,
-	type DecompiledScript,
 	type EventCommand,
 	type EventPage,
 	type EventPageConditions,
@@ -27,19 +25,10 @@ import {
 	type TroopPageConditions,
 } from "../src/index.js";
 import { hardline, indent } from "../src/layout.js";
+import { expectPrettierStable } from "./support/prettier.js";
 import { describeWithGame } from "./support/test-game.js";
 
 const FIXTURE = fileURLToPath(new URL("./fixtures/basic", import.meta.url));
-
-/** Formats with this repo's Prettier settings. */
-function format(text: string): Promise<string> {
-	return prettier.format(text, { parser: "typescript", useTabs: true, printWidth: 100 });
-}
-
-/** Checks that Prettier leaves a script exactly as printed. */
-async function expectPrettierStable(script: DecompiledScript): Promise<void> {
-	expect(await format(script.text)).toBe(script.text);
-}
 
 /** Symbols for inline tests. */
 const context: DecompileContext = {
@@ -637,12 +626,10 @@ describeWithGame("decompileDocument on the configured test game", (game) => {
 			expect(coverage.commands).toBe([...lists.values()].reduce((sum, length) => sum + length, 0));
 			expect(problems.slice(0, 10)).toEqual([]);
 
-			// Prettier agrees with the layout: formatting changes nothing. Raw strings with text codes
-			// aren't valid TypeScript (`\x`, a trailing `\`), so each backslash in the data becomes
-			// another one-column character first.
-			for (const { containers } of documents.slice(0, 5)) {
-				const swapped = JSON.stringify(containers).replaceAll("\\\\", "§");
-				await expectPrettierStable(decompileDocument(JSON.parse(swapped), symbols));
+			// Prettier agrees with the layout: formatting changes nothing outside lambda bodies, which
+			// keep JavaScript as stored (`expectPrettierStable` masks them).
+			for (const script of scripts.slice(0, 5)) {
+				await expectPrettierStable(script);
 			}
 		},
 	);

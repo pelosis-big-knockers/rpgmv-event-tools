@@ -102,10 +102,7 @@
 			{
 				"language": "rpgmv-script",
 				"scopeName": "source.rpgmv-script",
-				"path": "./syntaxes/rpgmv-script.tmLanguage.json",
-				"embeddedLanguages": {
-					"meta.embedded.line.js": "javascript"
-				}
+				"path": "./syntaxes/rpgmv-script.tmLanguage.json"
 			}
 		]
 	},

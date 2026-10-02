@@ -1,4 +1,3 @@
-import * as prettier from "prettier";
 import { describe, expect, it } from "vitest";
 import {
 	buildStructure,
@@ -17,6 +16,7 @@ import {
 	type ScriptContainer,
 } from "../src/index.js";
 import { BATTLE_RENDERERS } from "../src/battle-renderers.js";
+import { expectPrettierStable } from "./support/prettier.js";
 import { describeWithGame } from "./support/test-game.js";
 
 const named = (...names: string[]) => [null, ...names.map((name) => ({ name }))];
@@ -70,15 +70,6 @@ function body(script: DecompiledScript): string {
 		.slice(3, -2)
 		.map((line) => line.slice(1))
 		.join("\n");
-}
-
-async function expectPrettierStable(script: DecompiledScript): Promise<void> {
-	const formatted = await prettier.format(script.text, {
-		parser: "typescript",
-		useTabs: true,
-		printWidth: 100,
-	});
-	expect(formatted).toBe(script.text);
 }
 
 /** Expects each command to print as the given line, with no raw fallback. */
