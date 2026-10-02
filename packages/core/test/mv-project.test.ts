@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
 	describeLocation,
+	isProjectDataFile,
 	loadProject,
 	mapFileName,
 	stringifyMvJson,
@@ -99,6 +100,23 @@ describe("mapFileName", () => {
 	});
 });
 
+describe("isProjectDataFile", () => {
+	it("accepts System.json, database files and maps, and nothing else", () => {
+		for (const file of [
+			"System.json",
+			"Troops.json",
+			"Actors.json",
+			"MapInfos.json",
+			"Map012.json",
+		]) {
+			expect(isProjectDataFile(file), file).toBe(true);
+		}
+		for (const file of ["Plugins.json", "Map.json", "System.json.bak", "Save1.rpgsave"]) {
+			expect(isProjectDataFile(file), file).toBe(false);
+		}
+	});
+});
+
 describe("projects on disk", () => {
 	let location: MvProjectLocation;
 
@@ -181,6 +199,28 @@ describe("projects on disk", () => {
 		await project.reload("Actors.json");
 		expect(project.database("actor")).toBeUndefined();
 		expect(project.names.of("actor", 1)).toBeUndefined();
+	});
+
+	it("keep the last good data when a reload fails", async () => {
+		const project = await loadProject(location);
+		await project.map(1);
+		for (const file of ["CommonEvents.json", "Actors.json", "Map001.json"]) {
+			await writeFile(join(location.dataDir, file), "[null,");
+			await expect(project.reload(file)).rejects.toThrow(`Could not load ${file}`);
+		}
+		expect(project.commonEvents[1]?.name).toBe("Toggle lantern");
+		expect(project.database("actor")).toHaveLength(4);
+		expect(project.isMapLoaded(1)).toBe(true);
+		expect((await project.map(1)).events[1]?.name).toBe("Keeper");
+	});
+
+	it("unload a loaded map whose file was deleted", async () => {
+		const project = await loadProject(location);
+		await project.map(1);
+		await rm(join(location.dataDir, "Map001.json"));
+		await project.reload("Map001.json");
+		expect(project.isMapLoaded(1)).toBe(false);
+		await expect(project.map(1)).rejects.toThrow("Could not load Map001.json");
 	});
 
 	it("refuse to reload or save files the project doesn't know", async () => {

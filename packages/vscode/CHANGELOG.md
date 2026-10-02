@@ -19,3 +19,6 @@
 - Show JavaScript (Script commands, script conditions and operands, and move-route `script`
   steps) as lambdas, `script(() => …)`, highlighted as code. The code is kept exactly as stored;
   code that can't be a lambda stays a `script("…")` string.
+- Reload a project's data files when they change on disk, for example when the MV editor saves,
+  and update the explorer and open scripts to match. A file that can't be read yet keeps its
+  last good data until it changes again, and a script whose entry was deleted says so.

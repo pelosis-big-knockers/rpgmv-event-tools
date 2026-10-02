@@ -69,7 +69,7 @@ export {
 	writeMvFile,
 	type MvJsonLayout,
 } from "./mv-json.js";
-export { MvProject, loadProject, mapFileName } from "./mv-project.js";
+export { MvProject, isProjectDataFile, loadProject, mapFileName } from "./mv-project.js";
 export {
 	DATABASE_FILES,
 	MvNames,

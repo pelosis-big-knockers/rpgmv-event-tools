@@ -41,6 +41,18 @@ export function mapFileName(mapId: number): string {
 }
 
 /**
+ * Whether `fileName` is a data file a project loads and can `reload`: `System.json`, a database
+ * file or a map.
+ */
+export function isProjectDataFile(fileName: string): boolean {
+	return (
+		fileName in REQUIRED_FILES ||
+		OPTIONAL_FILES.includes(fileName) ||
+		mapIdFromFileName(fileName) !== undefined
+	);
+}
+
+/**
  * An MV project's data, loaded from its `data/` folder.
  *
  * `System.json` and the database files are loaded up front. Maps are loaded the first time
@@ -155,21 +167,29 @@ export class MvProject {
 
 	/**
 	 * Reads a file from disk again, replacing what's in memory, for example after it changed
-	 * outside this project. A map that isn't loaded yet is left to load when first asked for.
+	 * outside this project. A map that isn't loaded yet is left to load when first asked for, and
+	 * a loaded map whose file was deleted is unloaded. If the file can't be read or checked, this
+	 * rejects and the data in memory stays as it was.
 	 */
 	async reload(fileName: string): Promise<void> {
 		const mapId = mapIdFromFileName(fileName);
 		if (mapId !== undefined) {
 			this.#loadingMaps.delete(mapId);
 			if (this.#files.has(fileName)) {
-				await this.#loadFile(fileName);
+				try {
+					await this.#loadFile(fileName);
+				} catch (error) {
+					if (!isMissingFile(error instanceof Error ? error.cause : undefined)) {
+						throw error;
+					}
+					this.#files.delete(fileName);
+				}
 			}
 			return;
 		}
 		if (fileName in REQUIRED_FILES) {
 			await this.#loadFile(fileName);
 		} else if (OPTIONAL_FILES.includes(fileName)) {
-			this.#files.delete(fileName);
 			await this.#loadFile(fileName, { optional: true });
 		} else {
 			throw new Error(`${fileName} is not a data file this project loads`);
@@ -197,6 +217,7 @@ export class MvProject {
 			content = await readMvFile(join(this.location.dataDir, fileName));
 		} catch (error) {
 			if (options.optional && isMissingFile(error)) {
+				this.#files.delete(fileName);
 				return undefined;
 			}
 			throw new Error(
