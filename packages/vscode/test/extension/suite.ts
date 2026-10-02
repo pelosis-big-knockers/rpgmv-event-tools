@@ -33,6 +33,33 @@ const tests: [string, () => Promise<void>][] = [
 		},
 	],
 	[
+		"filters the explorer",
+		async () => {
+			const { explorer, filter } = api;
+			await filter.apply("lantern");
+			const categories = await explorer.getChildren();
+			const item = explorer.getTreeItem(categories[0]!);
+			assert.deepEqual([item.label, item.description], ["Common Events", "1"]);
+			assert.equal(categories.length, 1);
+			assert.equal(item.collapsibleState, vscode.TreeItemCollapsibleState.Expanded);
+			const events = await explorer.getChildren(categories[0]);
+			assert.deepEqual(
+				events.map((node) => node.label),
+				["1 · Toggle lantern"],
+			);
+
+			await vscode.commands.executeCommand("rpgmvEventTools.filterExplorer", "dragon");
+			assert.deepEqual(await explorer.getChildren(), []);
+			await vscode.commands.executeCommand("rpgmvEventTools.clearExplorerFilter");
+			const all = await explorer.getChildren();
+			assert.equal(all.length, 3);
+			assert.equal(
+				explorer.getTreeItem(all[0]!).collapsibleState,
+				vscode.TreeItemCollapsibleState.Collapsed,
+			);
+		},
+	],
+	[
 		"opens a common event's script",
 		async () => {
 			await vscode.commands.executeCommand(

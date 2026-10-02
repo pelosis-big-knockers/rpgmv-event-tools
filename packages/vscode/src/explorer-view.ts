@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import type { ExplorerFilter } from "./explorer-filter.js";
 import type { ExplorerCategory, ExplorerNode, ExplorerTree } from "./explorer-tree.js";
 import { SCRIPT_SCHEME } from "./script-uri.js";
 
@@ -23,6 +24,8 @@ export class ExplorerProvider implements vscode.TreeDataProvider<ExplorerNode>, 
 	readonly #openCommand: string;
 	readonly #onDidChangeTreeData = new vscode.EventEmitter<ExplorerNode | undefined>();
 	readonly onDidChangeTreeData = this.#onDidChangeTreeData.event;
+	/** How many times a filter was set, to give the filtered tree's items their own ids. */
+	#filterCount = 0;
 
 	constructor(tree: ExplorerTree, openCommand: string) {
 		this.tree = tree;
@@ -34,6 +37,18 @@ export class ExplorerProvider implements vscode.TreeDataProvider<ExplorerNode>, 
 		this.#onDidChangeTreeData.fire(node);
 	}
 
+	/** The tree's filter, if any. */
+	get filter(): ExplorerFilter | undefined {
+		return this.tree.options.filter;
+	}
+
+	/** Filters the tree, or shows all of it again with `undefined`, and builds it again. */
+	setFilter(filter: ExplorerFilter | undefined): void {
+		this.tree.options.filter = filter;
+		this.#filterCount++;
+		this.refresh();
+	}
+
 	getChildren(node?: ExplorerNode): Promise<ExplorerNode[]> {
 		return this.tree.children(node);
 	}
@@ -43,13 +58,18 @@ export class ExplorerProvider implements vscode.TreeDataProvider<ExplorerNode>, 
 	}
 
 	getTreeItem(node: ExplorerNode): vscode.TreeItem {
+		// A filtered tree shows the nodes that lead to matches expanded. VS Code keeps an item
+		// collapsed or expanded by its id, so they get new ids for each filter.
+		const filtered = this.filter !== undefined;
 		const item = new vscode.TreeItem(
 			node.label,
-			node.collapsible
-				? vscode.TreeItemCollapsibleState.Collapsed
-				: vscode.TreeItemCollapsibleState.None,
+			!node.collapsible
+				? vscode.TreeItemCollapsibleState.None
+				: filtered && (node.kind === "project" || node.kind === "category" || node.kind === "map")
+					? vscode.TreeItemCollapsibleState.Expanded
+					: vscode.TreeItemCollapsibleState.Collapsed,
 		);
-		item.id = node.id;
+		item.id = filtered ? `${node.id}?filter=${this.#filterCount}` : node.id;
 		item.contextValue = node.kind;
 		item.iconPath = new vscode.ThemeIcon(icon(node));
 		if (node.description !== undefined) {
