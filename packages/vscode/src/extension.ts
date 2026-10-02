@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import { ExplorerTree } from "./explorer-tree.js";
+import { EXPLORER_VIEW, ExplorerProvider, SHOW_EMPTY_ENTRIES_SETTING } from "./explorer-view.js";
 import { ProjectSession } from "./project-session.js";
 import { ScriptDocuments, pageStartLine } from "./script-documents.js";
 import { SCRIPT_SCHEME, parseScriptPath, type ScriptAddress } from "./script-uri.js";
@@ -6,20 +8,44 @@ import { SCRIPT_SCHEME, parseScriptPath, type ScriptAddress } from "./script-uri
 /** Opens a script document, and optionally scrolls to one of its pages. */
 export const OPEN_CONTAINER_COMMAND = "rpgmvEventTools.openContainer";
 
+/** What `activate` returns, for the extension's smoke test. */
+export interface ExtensionApi {
+	readonly explorer: ExplorerProvider;
+}
+
 let log: vscode.LogOutputChannel;
 
-export function activate(context: vscode.ExtensionContext): void {
+export function activate(context: vscode.ExtensionContext): ExtensionApi {
 	log = vscode.window.createOutputChannel("RPG Maker MV", { log: true });
 	const session = new ProjectSession(log);
 	const documents = new ScriptDocuments(session);
+	const explorer = new ExplorerProvider(
+		new ExplorerTree(session, { showEmptyEntries: showEmptyEntries() }),
+		OPEN_CONTAINER_COMMAND,
+	);
+	const addFolders = (folders: readonly vscode.WorkspaceFolder[]) => {
+		// The tree shows a folder's projects once they've loaded.
+		void Promise.all(scanFolders(session, folders)).then(() => explorer.refresh());
+	};
 
 	context.subscriptions.push(
 		log,
+		explorer,
+		vscode.window.createTreeView(EXPLORER_VIEW, {
+			treeDataProvider: explorer,
+			showCollapseAll: true,
+		}),
+		vscode.workspace.onDidChangeConfiguration((event) => {
+			if (event.affectsConfiguration(SHOW_EMPTY_ENTRIES_SETTING)) {
+				explorer.tree.options.showEmptyEntries = showEmptyEntries();
+				explorer.refresh();
+			}
+		}),
 		vscode.workspace.onDidChangeWorkspaceFolders((event) => {
 			for (const folder of event.removed) {
 				session.removeFolder(folder.uri.fsPath);
 			}
-			addFolders(session, event.added);
+			addFolders(event.added);
 		}),
 		vscode.workspace.registerTextDocumentContentProvider(SCRIPT_SCHEME, {
 			async provideTextDocumentContent(uri) {
@@ -37,19 +63,28 @@ export function activate(context: vscode.ExtensionContext): void {
 			(uri: vscode.Uri | string, pageIndex?: number) => openContainer(documents, uri, pageIndex),
 		),
 	);
-	addFolders(session, vscode.workspace.workspaceFolders ?? []);
+	addFolders(vscode.workspace.workspaceFolders ?? []);
+	return { explorer };
 }
 
 export function deactivate(): void {}
 
-function addFolders(session: ProjectSession, folders: readonly vscode.WorkspaceFolder[]): void {
-	for (const folder of folders) {
+/** Starts loading the projects of local `folders`, each promise resolving when one has loaded. */
+function scanFolders(
+	session: ProjectSession,
+	folders: readonly vscode.WorkspaceFolder[],
+): Promise<void>[] {
+	return folders.flatMap((folder) => {
 		if (folder.uri.scheme !== "file") {
 			log.info(`Skipping ${folder.uri.toString()}: only local folders are supported.`);
-			continue;
+			return [];
 		}
-		void session.addFolder({ name: folder.name, path: folder.uri.fsPath });
-	}
+		return [session.addFolder({ name: folder.name, path: folder.uri.fsPath })];
+	});
+}
+
+function showEmptyEntries(): boolean {
+	return vscode.workspace.getConfiguration().get<boolean>(SHOW_EMPTY_ENTRIES_SETTING, false);
 }
 
 /**

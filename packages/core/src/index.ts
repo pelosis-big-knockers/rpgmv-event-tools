@@ -29,6 +29,7 @@ export {
 	type DecompiledScript,
 	type FallbackCoverage,
 	type ScriptContainer,
+	type ScriptPage,
 } from "./decompile.js";
 export type { Doc } from "./layout.js";
 export {
@@ -79,6 +80,7 @@ export {
 	type NamedKind,
 	type SystemNameKind,
 } from "./names.js";
+export { summarizePage, type PageSummary } from "./page-summary.js";
 export {
 	findProjects,
 	resolveMvProject,

@@ -1,5 +1,6 @@
 import * as assert from "node:assert/strict";
 import * as vscode from "vscode";
+import type { ExtensionApi } from "../../src/extension.js";
 
 /**
  * The extension smoke test, run inside VS Code by `run.mjs` with the basic fixture open as the
@@ -9,7 +10,28 @@ import * as vscode from "vscode";
 const EXTENSION_ID = "p-b-k.rpgmv-event-tools";
 const OPEN_CONTAINER = "rpgmvEventTools.openContainer";
 
+let api: ExtensionApi;
+
 const tests: [string, () => Promise<void>][] = [
+	[
+		"shows the fixture's categories in the explorer",
+		async () => {
+			const { explorer } = api;
+			const categories = await explorer.getChildren();
+			assert.deepEqual(
+				categories.map((node) => explorer.getTreeItem(node).label),
+				["Common Events", "Maps", "Troops"],
+			);
+			const troops = await explorer.getChildren(categories[2]);
+			const pages = await explorer.getChildren(troops[0]);
+			const page = explorer.getTreeItem(pages[1]!);
+			assert.equal(page.label, "Page 2");
+			assert.equal(page.command?.command, OPEN_CONTAINER);
+			const [uri, pageIndex] = page.command?.arguments ?? [];
+			assert.equal(String(uri), "rpgmv:/basic/troops/1/Cellar%20Bats.mvscript");
+			assert.equal(pageIndex, 1);
+		},
+	],
 	[
 		"opens a common event's script",
 		async () => {
@@ -46,7 +68,7 @@ const tests: [string, () => Promise<void>][] = [
 export async function run(): Promise<void> {
 	const extension = vscode.extensions.getExtension(EXTENSION_ID);
 	assert.ok(extension, `${EXTENSION_ID} is not installed`);
-	await extension.activate();
+	api = (await extension.activate()) as ExtensionApi;
 	let failed = 0;
 	for (const [name, test] of tests) {
 		try {

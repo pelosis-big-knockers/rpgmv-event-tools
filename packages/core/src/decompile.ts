@@ -9,11 +9,13 @@ import type { EventCommand } from "./commands.js";
 import { hardline, join, mark, printDoc, type Doc } from "./layout.js";
 import type {
 	CommonEvent,
+	EventPage,
 	EventPageConditions,
 	ListLocation,
 	LocatedCommandList,
 	MapEvent,
 	Troop,
+	TroopPage,
 	TroopPageConditions,
 } from "./models.js";
 import type { NamedKind } from "./names.js";
@@ -113,6 +115,28 @@ export function decompile(
 	return printer.finish(statements.length > 0 ? [join(hardline, statements), hardline] : "");
 }
 
+/** A map event's or troop's page. */
+export type ScriptPage =
+	| { readonly kind: "mapEvent"; readonly page: EventPage }
+	| { readonly kind: "troop"; readonly page: TroopPage };
+
+/** The options of a page's `page(…)` call. */
+export interface PageOptions {
+	/** The options in order: `trigger` or `span`, then `when` or `conditions`, then `end`. */
+	readonly options: readonly (readonly [key: string, value: Expr])[];
+	/**
+	 * The checks `when` is made of, joined with `&&`: empty if the page has no conditions, or
+	 * `undefined` if they print as the stored `conditions`.
+	 */
+	readonly checks: readonly Expr[] | undefined;
+}
+
+/** The options of a page's `page(…)` call, as the script prints them. */
+export function pageOptions(page: ScriptPage, context: DecompileContext): PageOptions {
+	const hasEnd = buildStructure(page.page.list).at(-1)?.kind === "end";
+	return new ScriptPrinter(context).pageOptions(page, hasEnd);
+}
+
 /** Adds up the coverage of several scripts. */
 export function sumCoverage(coverages: Iterable<FallbackCoverage>): FallbackCoverage {
 	let commands = 0;
@@ -130,6 +154,12 @@ const COMMON_EVENT_TRIGGERS = ["none", "autorun", "parallel"];
 const PAGE_TRIGGERS = ["action", "playerTouch", "eventTouch", "autorun", "parallel"];
 const TROOP_SPANS = ["battle", "turn", "moment"];
 const SELF_SWITCHES = ["A", "B", "C", "D"];
+
+/** The checks of a `when` function, and the parameters it takes. */
+interface WhenChecks {
+	readonly parameters: readonly string[];
+	readonly checks: readonly Expr[];
+}
 
 interface MutableSegment {
 	startLine: number;
@@ -222,9 +252,7 @@ class ScriptPrinter {
 		const ref: ContainerRef = { kind: "mapEvent", mapId, eventId: id };
 		const pages = event.pages.map((page, pageIndex) => {
 			const body = this.listBody({ kind: "mapEvent", mapId, eventId: id, pageIndex }, page.list);
-			const options: [string, Expr][] = [["trigger", enumValue(PAGE_TRIGGERS, page.trigger)]];
-			this.#addConditions(options, this.#mapWhen(page.conditions), page.conditions);
-			addEnd(options, body);
+			const { options } = this.pageOptions({ kind: "mapEvent", page }, body.end !== undefined);
 			return this.#pageCall(ref, pageIndex, options, body);
 		});
 		const options: [string, Expr][] = [
@@ -241,9 +269,7 @@ class ScriptPrinter {
 		const ref: ContainerRef = { kind: "troop", troopId: id };
 		const pages = troop.pages.map((page, pageIndex) => {
 			const body = this.listBody({ kind: "troop", troopId: id, pageIndex }, page.list);
-			const options: [string, Expr][] = [["span", enumValue(TROOP_SPANS, page.span)]];
-			this.#addConditions(options, this.#troopWhen(page.conditions), page.conditions);
-			addEnd(options, body);
+			const { options } = this.pageOptions({ kind: "troop", page }, body.end !== undefined);
 			return this.#pageCall(ref, pageIndex, options, body);
 		});
 		const options: [string, Expr][] = [
@@ -254,10 +280,28 @@ class ScriptPrinter {
 		return this.#segment({ kind: "container", container: ref }, statement(printed));
 	}
 
+	/** A page's options, with `end: false` unless its list `hasEnd` (the usual final `0`). */
+	pageOptions({ kind, page }: ScriptPage, hasEnd: boolean): PageOptions {
+		const options: [string, Expr][] = [];
+		let when: WhenChecks | undefined;
+		if (kind === "mapEvent") {
+			options.push(["trigger", enumValue(PAGE_TRIGGERS, page.trigger)]);
+			when = this.#mapWhen(page.conditions);
+		} else {
+			options.push(["span", enumValue(TROOP_SPANS, page.span)]);
+			when = this.#troopWhen(page.conditions);
+		}
+		this.#addConditions(options, when, page.conditions);
+		if (!hasEnd) {
+			options.push(["end", booleanLiteral(false)]);
+		}
+		return { options, checks: when?.checks };
+	}
+
 	#pageCall(
 		container: ContainerRef,
 		pageIndex: number,
-		options: [string, Expr][],
+		options: readonly (readonly [string, Expr])[],
 		body: ListBody,
 	): Expr {
 		const printed = call("page", [objectLiteral(options), this.#bodyArrow(body)]);
@@ -268,19 +312,19 @@ class ScriptPrinter {
 	}
 
 	/** Adds `when` for conditions it can express, or else the stored `conditions` as they are. */
-	#addConditions(options: [string, Expr][], when: Expr | null | undefined, stored: unknown): void {
+	#addConditions(options: [string, Expr][], when: WhenChecks | undefined, stored: unknown): void {
 		if (when === undefined) {
 			options.push(["conditions", jsonLiteral(stored)]);
-		} else if (when !== null) {
-			options.push(["when", when]);
+		} else if (when.checks.length > 0) {
+			options.push(["when", arrowExpression(when.parameters, and(when.checks))]);
 		}
 	}
 
 	/**
-	 * A map page's conditions as a `when` function, `null` if there are none, or `undefined` if
-	 * `when` can't express them exactly.
+	 * A map page's conditions as the checks of a `when` function (none if there are no
+	 * conditions), or `undefined` if `when` can't express them exactly.
 	 */
-	#mapWhen(conditions: EventPageConditions): Expr | null | undefined {
+	#mapWhen(conditions: EventPageConditions): WhenChecks | undefined {
 		const flags = [
 			"switch1Valid",
 			"switch2Valid",
@@ -326,7 +370,7 @@ class ScriptPrinter {
 	}
 
 	/** A troop page's conditions, as {@link #mapWhen} does for map pages. */
-	#troopWhen(conditions: TroopPageConditions): Expr | null | undefined {
+	#troopWhen(conditions: TroopPageConditions): WhenChecks | undefined {
 		const flags = ["turnEnding", "turnValid", "enemyValid", "actorValid", "switchValid"] as const;
 		if (flags.some((flag) => typeof conditions[flag] !== "boolean")) {
 			return undefined;
@@ -590,15 +634,12 @@ function addEnd(options: [string, Expr][], body: ListBody): void {
 	}
 }
 
-/** `(params) => a && b`, `null` with no checks, or `undefined` if a check can't be expressed. */
+/** The checks of `(params) => a && b`, or `undefined` if a check can't be expressed. */
 function whenFunction(
 	parameters: readonly string[],
 	checks: readonly (Expr | undefined)[],
-): Expr | null | undefined {
-	if (checks.some((check) => check === undefined)) {
-		return undefined;
-	}
-	return checks.length === 0 ? null : arrowExpression(parameters, and(checks as Expr[]));
+): WhenChecks | undefined {
+	return checks.every((check) => check !== undefined) ? { parameters, checks } : undefined;
 }
 
 /** An enum value by name, or the stored value when it has none. */
