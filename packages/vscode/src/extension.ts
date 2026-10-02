@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { ExplorerFilterController } from "./explorer-filter-view.js";
 import { ExplorerTree } from "./explorer-tree.js";
 import { EXPLORER_VIEW, ExplorerProvider, SHOW_EMPTY_ENTRIES_SETTING } from "./explorer-view.js";
 import { ProjectSession } from "./project-session.js";
@@ -11,6 +12,7 @@ export const OPEN_CONTAINER_COMMAND = "rpgmvEventTools.openContainer";
 /** What `activate` returns, for the extension's smoke test. */
 export interface ExtensionApi {
 	readonly explorer: ExplorerProvider;
+	readonly filter: ExplorerFilterController;
 }
 
 let log: vscode.LogOutputChannel;
@@ -28,13 +30,17 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
 		void Promise.all(scanFolders(session, folders)).then(() => explorer.refresh());
 	};
 
+	const view = vscode.window.createTreeView(EXPLORER_VIEW, {
+		treeDataProvider: explorer,
+		showCollapseAll: true,
+	});
+	const filter = new ExplorerFilterController(view, explorer, session);
+
 	context.subscriptions.push(
 		log,
 		explorer,
-		vscode.window.createTreeView(EXPLORER_VIEW, {
-			treeDataProvider: explorer,
-			showCollapseAll: true,
-		}),
+		view,
+		filter,
 		vscode.workspace.onDidChangeConfiguration((event) => {
 			if (event.affectsConfiguration(SHOW_EMPTY_ENTRIES_SETTING)) {
 				explorer.tree.options.showEmptyEntries = showEmptyEntries();
@@ -64,7 +70,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
 		),
 	);
 	addFolders(vscode.workspace.workspaceFolders ?? []);
-	return { explorer };
+	return { explorer, filter };
 }
 
 export function deactivate(): void {}

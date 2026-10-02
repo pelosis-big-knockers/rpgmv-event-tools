@@ -2,10 +2,12 @@ import {
 	mapFileName,
 	summarizePage,
 	type EventCommand,
+	type MapEvent,
 	type MapInfo,
 	type MvProject,
 	type ScriptContainer,
 } from "@rpgmv-event-tools/core";
+import { listedParentId, type ExplorerFilter } from "./explorer-filter.js";
 import type { SessionProject } from "./project-session.js";
 import { containerPath, containerRef } from "./script-documents.js";
 import { addressKey } from "./script-uri.js";
@@ -29,12 +31,17 @@ import { addressKey } from "./script-uri.js";
  * when the database's maximum is raised. Map events are never hidden: every event on a map was
  * placed there, and the editor names new events (`EV001`), so even one without commands can show
  * a picture or block the way.
+ *
+ * With a `filter`, the tree shows only the entries that match it and the nodes they're listed
+ * under (see `explorer-filter.ts`). A matching container still lists all its pages.
  */
 
 /** Options that change which nodes the tree has. */
 export interface ExplorerOptions {
 	/** Show the empty slots of common events and troops. */
 	showEmptyEntries: boolean;
+	/** Show only the entries that match this filter. */
+	filter?: ExplorerFilter | undefined;
 }
 
 /** Where the projects come from: a `ProjectSession`, or a stand-in in tests. */
@@ -133,9 +140,18 @@ export class ExplorerTree {
 			await this.#source.whenLoaded();
 			const projects = this.#source.projects;
 			const only = projects.length === 1 ? projects[0] : undefined;
-			return only
-				? this.#categories(only, undefined)
-				: projects.map((project) => projectNode(project));
+			if (only) {
+				return this.#categories(only, undefined);
+			}
+			const nodes = projects.map((project) => projectNode(project));
+			if (!this.options.filter) {
+				return nodes;
+			}
+			// Leaves out projects with no matches.
+			const matched = await Promise.all(
+				nodes.map(async (node) => (await this.children(node)).length > 0),
+			);
+			return nodes.filter((_, index) => matched[index]);
 		}
 		switch (node.kind) {
 			case "project":
@@ -152,13 +168,22 @@ export class ExplorerTree {
 		}
 	}
 
-	#categories(project: SessionProject, parent: ExplorerNode | undefined): ExplorerNode[] {
+	async #categories(
+		project: SessionProject,
+		parent: ExplorerNode | undefined,
+	): Promise<ExplorerNode[]> {
+		const shownMaps = await this.#mapsToShow(project);
 		const counts: Record<ExplorerCategory, number> = {
 			commonEvents: this.#commonEvents(project.project).length,
-			maps: project.project.mapIds().length,
+			maps: shownMaps?.size ?? project.project.mapIds().length,
 			troops: this.#troops(project.project).length,
 		};
-		return (Object.keys(CATEGORY_LABELS) as ExplorerCategory[]).map((category) => ({
+		let categories = Object.keys(CATEGORY_LABELS) as ExplorerCategory[];
+		if (this.options.filter) {
+			// Leaves out categories with no matches.
+			categories = categories.filter((category) => counts[category] > 0);
+		}
+		return categories.map((category) => ({
 			kind: "category",
 			id: `category:${project.key}/${CATEGORY_SEGMENTS[category]}`,
 			label: CATEGORY_LABELS[category],
@@ -170,7 +195,7 @@ export class ExplorerTree {
 		}));
 	}
 
-	#categoryChildren(node: ExplorerNode & { kind: "category" }): ExplorerNode[] {
+	async #categoryChildren(node: ExplorerNode & { kind: "category" }): Promise<ExplorerNode[]> {
 		const { project } = node;
 		switch (node.category) {
 			case "commonEvents":
@@ -178,7 +203,7 @@ export class ExplorerTree {
 					containerNode(project, container, node),
 				);
 			case "maps":
-				return this.#childMaps(project, 0, node);
+				return this.#childMaps(project, 0, node, await this.#mapsToShow(project));
 			case "troops":
 				return this.#troops(project.project).map((container) =>
 					containerNode(project, container, node),
@@ -188,7 +213,7 @@ export class ExplorerTree {
 
 	async #mapChildren(node: ExplorerNode & { kind: "map" }): Promise<ExplorerNode[]> {
 		const { project, mapId } = node;
-		const maps = this.#childMaps(project, mapId, node);
+		const maps = this.#childMaps(project, mapId, node, await this.#mapsToShow(project));
 		let events;
 		try {
 			events = (await project.project.map(mapId)).events;
@@ -205,23 +230,33 @@ export class ExplorerTree {
 				},
 			];
 		}
+		const show = this.options.filter?.eventsToShow(project.project.mapInfos[mapId]);
 		const eventNodes = events.flatMap((event, id) =>
-			event
+			event && (!show || show(id, event))
 				? [containerNode(project, { kind: "mapEvent", mapId, id, event, mapEvents: events }, node)]
 				: [],
 		);
 		return [...maps, ...eventNodes];
 	}
 
-	/** The maps listed directly under `parentId` (0 for the top level), in the editor's order. */
-	#childMaps(project: SessionProject, parentId: number, parent: ExplorerNode): ExplorerNode[] {
+	/**
+	 * The maps listed directly under `parentId` (0 for the top level), in the editor's order. With
+	 * `shown`, only the maps in it.
+	 */
+	#childMaps(
+		project: SessionProject,
+		parentId: number,
+		parent: ExplorerNode,
+		shown?: ReadonlySet<number>,
+	): ExplorerNode[] {
 		const infos = project.project.mapInfos;
 		let byParent = this.#mapsByParent.get(infos);
 		if (!byParent) {
 			byParent = mapsByParent(infos);
 			this.#mapsByParent.set(infos, byParent);
 		}
-		return (byParent.get(parentId) ?? []).map((info) => ({
+		const maps = byParent.get(parentId) ?? [];
+		return (shown ? maps.filter((info) => shown.has(info.id)) : maps).map((info) => ({
 			kind: "map",
 			id: `map:${project.key}/maps/${info.id}`,
 			label: entryLabel(info.id, info.name),
@@ -232,23 +267,46 @@ export class ExplorerTree {
 		}));
 	}
 
+	/** With a filter, the ids of the maps to show (see `ExplorerFilter.mapsToShow`). */
+	async #mapsToShow(project: SessionProject): Promise<Set<number> | undefined> {
+		const { filter } = this.options;
+		if (!filter) {
+			return undefined;
+		}
+		const { project: mvProject } = project;
+		const loaded = new Map<number, readonly (MapEvent | null)[]>();
+		await Promise.all(
+			mvProject
+				.mapIds()
+				.filter((mapId) => mvProject.isMapLoaded(mapId))
+				.map(async (mapId) => {
+					loaded.set(mapId, (await mvProject.map(mapId)).events);
+				}),
+		);
+		return filter.mapsToShow(mvProject.mapInfos, (mapId) => loaded.get(mapId));
+	}
+
 	#commonEvents(project: MvProject): ScriptContainer[] {
+		const { filter } = this.options;
 		return project.commonEvents.flatMap((commonEvent, id) =>
 			commonEvent &&
 			(this.options.showEmptyEntries ||
 				!isBlank(commonEvent.name) ||
-				!isEmptyList(commonEvent.list))
+				!isEmptyList(commonEvent.list)) &&
+			(!filter || filter.matches(id, commonEvent.name))
 				? [{ kind: "commonEvent" as const, id, commonEvent }]
 				: [],
 		);
 	}
 
 	#troops(project: MvProject): ScriptContainer[] {
+		const { filter } = this.options;
 		return project.troops.flatMap((troop, id) =>
 			troop &&
 			(this.options.showEmptyEntries ||
 				!isBlank(troop.name) ||
-				!troop.pages.every((page) => isEmptyList(page.list)))
+				!troop.pages.every((page) => isEmptyList(page.list))) &&
+			(!filter || filter.matches(id, troop.name))
 				? [{ kind: "troop" as const, id, troop }]
 				: [],
 		);
@@ -265,7 +323,7 @@ function mapsByParent(infos: readonly (MapInfo | null)[]): Map<number, MapInfo[]
 		if (!info) {
 			continue;
 		}
-		const parentId = info.parentId !== info.id && infos[info.parentId] ? info.parentId : 0;
+		const parentId = listedParentId(infos, info);
 		let siblings = byParent.get(parentId);
 		if (!siblings) {
 			siblings = [];

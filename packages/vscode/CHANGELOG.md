@@ -19,3 +19,7 @@
 - Show JavaScript (Script commands, script conditions and operands, and move-route `script`
   steps) as lambdas, `script(() => …)`, highlighted as code. The code is kept exactly as stored;
   code that can't be a lambda stays a `script("…")` string.
+- Filter the event explorer from its title bar by name or id (`12` or `#12`): it shows only the
+  matching common events, map events, troops and maps, and the entries they're under, expanded.
+  A matching map shows all its events. Maps not loaded yet load in the background, with the
+  results updating as they do. **Clear Filter** shows the whole tree again.

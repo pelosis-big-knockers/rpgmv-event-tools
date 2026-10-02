@@ -41,6 +41,20 @@
 				"command": "rpgmvEventTools.openContainer",
 				"title": "Open Event Script",
 				"category": "RPG Maker MV"
+			},
+			{
+				"command": "rpgmvEventTools.filterExplorer",
+				"title": "Filter Events…",
+				"shortTitle": "Filter…",
+				"category": "RPG Maker MV",
+				"icon": "$(filter)"
+			},
+			{
+				"command": "rpgmvEventTools.clearExplorerFilter",
+				"title": "Clear Event Filter",
+				"shortTitle": "Clear Filter",
+				"category": "RPG Maker MV",
+				"icon": "$(clear-all)"
 			}
 		],
 		"menus": {
@@ -48,6 +62,22 @@
 				{
 					"command": "rpgmvEventTools.openContainer",
 					"when": "false"
+				},
+				{
+					"command": "rpgmvEventTools.clearExplorerFilter",
+					"when": "rpgmvEventTools.explorerFiltered"
+				}
+			],
+			"view/title": [
+				{
+					"command": "rpgmvEventTools.filterExplorer",
+					"when": "view == rpgmvEventTools.explorer",
+					"group": "navigation@1"
+				},
+				{
+					"command": "rpgmvEventTools.clearExplorerFilter",
+					"when": "view == rpgmvEventTools.explorer && rpgmvEventTools.explorerFiltered",
+					"group": "navigation@2"
 				}
 			]
 		},
@@ -82,6 +112,7 @@
 		"viewsWelcome": [
 			{
 				"view": "rpgmvEventTools.explorer",
+				"when": "!rpgmvEventTools.explorerFiltered",
 				"contents": "No RPG Maker MV project was found in this workspace. Open a game's folder: the one with data/System.json, or www/data/System.json in a deployed game."
 			}
 		],
